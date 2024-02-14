@@ -1,5 +1,5 @@
 ---
-title: "notes"
+title: "some code snippets that worked for me"
 listing:
   contents: posts
   sort: "date desc"
