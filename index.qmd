@@ -1,5 +1,5 @@
 ---
-title: "some code snippets that worked for me"
+title: "Python snippets"
 listing:
   contents: posts
   sort: "date desc"

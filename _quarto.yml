@@ -1,6 +1,8 @@
 project:
   type: website
-  output-dir: docs
+  output-dir: docs  
+  resources: 
+    - "*.mp3"
 
 execute:
   freeze: auto
@@ -11,12 +13,12 @@ website:
     right:
       - about.qmd
       - icon: github
-        href: https://github.com/
+        href: https://github.com/nealcaren
       - icon: twitter
-        href: https://twitter.com
+        href: https://twitter.com/haphazardsoc
 format:
   html:
-    theme: cosmo
+    theme: cosmos
     css: styles.css
 
 
