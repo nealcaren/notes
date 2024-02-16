@@ -1,0 +1,11 @@
+[
+  {
+    "listing": "/index.html",
+    "items": [
+      "/posts/function-calling/pydantic-sm.html",
+      "/posts/function-calling/pydantic.html",
+      "/posts/transcription/whisper-plus.html",
+      "/posts/tts/tts.html"
+    ]
+  }
+]
