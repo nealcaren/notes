@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/replication/pydantic.html",
       "/posts/transcription/whisper-plus.html",
       "/posts/tts/tts.html"
     ]
