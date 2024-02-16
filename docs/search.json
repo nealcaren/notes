@@ -4,7 +4,7 @@
     "href": "about.html",
     "title": "About",
     "section": "",
-    "text": "by Neal Caren"
+    "text": "Python notebooks, mostly written to myself, on things that worked or didn’t work.\nAll art is AI generated in the style of early twentiety century Ashcan sketches.\nBlog is built using Quarto.\nby Neal Caren"
   },
   {
     "objectID": "posts/replication/pydantic.html",
