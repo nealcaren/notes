@@ -9,13 +9,14 @@ execute:
 
 website:
   title: "notes"
+  twitter-card: true
   navbar:
     right:
       - about.qmd
       - icon: github
         href: https://github.com/nealcaren
       - icon: twitter
-        href: https://twitter.com/haphazardsoc
+        href: https://bsky.app/profile/haphazardsoc.bsky.social
 format:
   html:
     theme: cosmos
