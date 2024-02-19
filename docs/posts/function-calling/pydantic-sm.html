@@ -61,7 +61,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="../../site_libs/quarto-nav/headroom.min.js"></script>
 <script src="../../site_libs/clipboard/clipboard.min.js"></script>
 <script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
@@ -104,9 +104,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
-
-<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
 
 <link rel="stylesheet" href="../../styles.css">
@@ -210,7 +207,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>Note: you may need to restart the kernel to use updated packages.</code></pre>
 </div>
 </div>
-<div id="28758811-c80a-4ceb-b299-9c5464459db8" class="cell" data-execution_count="33">
+<div id="28758811-c80a-4ceb-b299-9c5464459db8" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> BaseModel, Field</span>
@@ -220,7 +217,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">'display.max_colwidth'</span>, <span class="dv">300</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="19cea5ce-6118-40b4-9c2e-fdd6ddba113e" class="cell" data-execution_count="41">
+<p>Pydantic is a library that helps define the shape and type of our data, making sure it matches our expectations before we proceed with our code. Here’s a breakdown of the code block using Pydantic:</p>
+<ul>
+<li><p><strong>BaseModel</strong>: This is a key part of Pydantic. Think of it as a blueprint for the data you expect. You define a class that inherits from <code>BaseModel</code>, and in it, you detail the structure of your data.</p></li>
+<li><p><strong>Fields</strong>: Inside each class that inherits from <code>BaseModel</code>, we define what data we expect using fields. For example, <code>content: str</code> means we expect a piece of data named <code>content</code> that should be a string. The <code>Field(...)</code> function is used to add extra details about each field, like a description or default value.</p></li>
+<li><p><strong>Classes Defined</strong>:</p>
+<ul>
+<li><strong>SummaryTweet</strong>: A class for creating objects that represent a concise version of an abstract.</li>
+<li><strong>AnnounceTweet</strong>: A class for making objects that represent a tweet announcing a new article.</li>
+<li><strong>InsightTweet</strong>: This class is for objects that encapsulate a simple insight from complex social science concepts.</li>
+<li><strong>ThreadTweet</strong>: A class for a list of tweets, making up a thread about an article.</li>
+<li><strong>GenerateTweets</strong>: This class combines all the above, organizing them into lists of each type of tweet.</li>
+</ul></li>
+<li><p><strong>List Fields</strong>: When we want to store multiple items (like multiple tweets of the same kind), we use <code>List[SomeClass]</code>. This tells Pydantic we expect a list where each item is an instance of <code>SomeClass</code>.</p></li>
+</ul>
+<p>This code essentially sets up a structure for handling different types of tweets as data objects. By defining these classes, we ensure that the data we work with matches our expectations, reducing bugs and making our code more reliable.</p>
+<div id="19cea5ce-6118-40b4-9c2e-fdd6ddba113e" class="cell" data-execution_count="42">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SummaryTweet(BaseModel):</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    content: <span class="bu">str</span> <span class="op">=</span> Field(..., description<span class="op">=</span><span class="st">"A concise version of the abstract in tweet format. No Hastags"</span>)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -230,271 +242,175 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> InsightTweet(BaseModel):</span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    content: <span class="bu">str</span> <span class="op">=</span> Field(..., description<span class="op">=</span><span class="st">"Simple, understandable statement distilling a complex social science concept.  No Hastags"</span>)</span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> GenerateTweets(BaseModel):</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    summary_tweets: List[SummaryTweet] <span class="op">=</span> Field(default<span class="op">=</span>[], description<span class="op">=</span><span class="st">"A list of SummaryTweet instances."</span>)</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    insight_tweets: List[InsightTweet] <span class="op">=</span> Field(default<span class="op">=</span>[], description<span class="op">=</span><span class="st">"A list of InsightTweet instances."</span>)</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    announce_tweets: List[AnnounceTweet] <span class="op">=</span> Field(default<span class="op">=</span>[], description<span class="op">=</span><span class="st">"A list of AnnounceTweet instances."</span>)</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Note: there might be a simpler way to do this, since each of the subclasses only has one field.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ThreadTweet(BaseModel):</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    content: List[<span class="bu">str</span>] <span class="op">=</span> Field(default<span class="op">=</span>[], description<span class="op">=</span><span class="st">"A list of tweets that together form a thread about the article, summarizing its key points and implications, engaging the audience, and encouraging further discussion or reading. No hashtags."</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> GenerateTweets(BaseModel):</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    summary_tweets: List[SummaryTweet] <span class="op">=</span> Field(default<span class="op">=</span>[], description<span class="op">=</span><span class="st">"A list of SummaryTweet instances."</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    insight_tweets: List[InsightTweet] <span class="op">=</span> Field(default<span class="op">=</span>[], description<span class="op">=</span><span class="st">"A list of InsightTweet instances."</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    announce_tweets: List[AnnounceTweet] <span class="op">=</span> Field(default<span class="op">=</span>[], description<span class="op">=</span><span class="st">"A list of AnnounceTweet instances."</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    thread_tweets: List[ThreadTweet] <span class="op">=</span> Field(default<span class="op">=</span>[], description<span class="op">=</span><span class="st">"A list of ThreadTweet instances."</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Note: there might be a simpler way to do this, since each of the subclasses only has one field.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="8467aa7d-645f-41d2-b9c9-b9052023f4b2" class="cell" data-execution_count="42">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># I put in the introduction when using GPT4 because it actually uses the extra information.</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>article <span class="op">=</span> <span class="st">'''</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="st">TITLE: THE MAGA MOVEMENT’S BIG UMBRELLA</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="st">AUTHOR: Hank Johnston</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="st">JOURNAL: Mobilization: An International Quarterly (2024) 28 (4): 409–433.</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="st">LINK: https://doi.org/10.17813/1086-671X-28-4-409</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="st">ABSTRACT: This article considers the phenomenon of MAGAism as a general, “big-umbrella” social movement to probe its structure and persistence. Drawing on my research on nationalist movements, I discuss the narrative flexibility and emotional power of nationalism and consider how these characteristics fuel a particularly resentful form of majoritarian nationalism—MAGAism. I identify five points of entry for MAGA participation, starting with this bitter majoritarian nationalism, then populism, then traditional conservatism, next a Trumpian personality cult, and ending with the alt-right’s extreme white supremacism and fascism. I then discuss two forces that gather this unlikely collection of groups and individuals under the MAGA umbrella: (1) the flexibility of social identity and how it allows status-threat narratives to subsume and redirect economic and political claims; (2) the social media environment of the 2020s, cut loose from the traditional gatekeepers of news and information, wherein maximizing hits—not accuracy—is the guiding principle. On the one hand, social media intensify the prominence of the demagogic celebrity at the helm of the Republican Party, Donald J. Trump. On the other hand, alt-right trolls compete for prominence by seeking outrageousness and shock value, enhanced by algorithms that create a closed information environment. These social media trends pull MAGA adherents further to the right by inflaming public discourse and building the movement on lies and conspiracies.</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="st">INTRODUCTION: The rise of far right-wing parties and extremist groups is now a topic of deep concern among social scientists who study collective action and contentious politics.  As a reader of this special issue of Mobilization, this trend no doubt has been on your mind a lot, as it has been on mine—especially the challenges it poses to democratic institutions.i In the U.S. today, one of the major political parties actively restricts voting rights, bans books in libraries, embraces conspiracies, flaunts constitutional principles, and limits public-school curricula on topics such as diversity, slavery, gender and sexuality (Natanson 2023a, 2023b)—and millions of MAGA supporters are okay with it (Baker, Perry, and Whitehead, 2020; Enders, Farhart, Miller, and Uscinski 2022; Graham et al. 2021; Stewart 2023). Further along the right-wing spectrum, one increasingly finds rising antisemitism, white Christian nationalism, gun-toting bullies, and misogynists (see Davis and Kettrey’s study in this issue) in the U.S. public sphere, raising parallels with European history in the early twentieth century and its brown shirts and black shirts (rather than today’s polo shirts and tac gear). While violence and intolerance are not unique to the extreme right, these trends reflect a synergy between the current political environment, eroding democratic norms, and—among more and more citizens in democratic states—authoritarian and even fascist tendencies (Jackson 2021; Wintemute, Robinson, Tomish 2022). In the U.S. these trends can be grouped under the umbrella of MAGAism where majoritarian nationalism mixes with populism, far-right extremism, and a virtual (in both meanings of the term) potpourri of themes such as antiwokeness, antivaccines, parental rights, gun rights, sovereign citizenry, science denial, masculinity, the lie of a stolen 2020 election, Trumpian personality cult, white replacement, QAnon conspiracies, among many others. This essay contextualizes the special issue articles by situating them in relation to trends in the U.S., which I discuss under the big umbrella of MAGAism. Following Tarrow (2021: 175), common usage in the popular press, and Trump himself, I consider MAGAism as a general social movement, one that encompasses the rightward shift of public discourse and politics in the U.S. plus the array of mobilizing groups that drive it.ii  I will offer a somewhat personalized essay that draws on insights from my work on the power (and danger) of nationalism to analyze a particularly resentful majoritarian nationalism—often labeled white nationalism in the U.S.  (Graham et al. 2021; Mudde 2019, Miller-Idriss, 2021; Young 2017). I am interested not only in militias, alt-right trolls, and white-supremacist churches,  but—more broadly—the mechanisms that allow these extremists to be grouped with millions of middle-class working citizens who come to the movement via parental-rights groups, suburban bible-study groups, or as antivaxxers, tradition-alists, or Constitutionalists.  MAGAism is a big-tent collective action—a movement with continuity, shared identity, diverse claims and political objectives, networked by an array of groups and organizations—the movement’s mobilizing structures that mostly stand apart from the Republican Party. I will identify the movement’s patterns of discourse and how it is structured to help understand the complexity, die-hard loyalty, denialism, and conspiracies that unite millions of MAGAistas in the face of factual evidence that should undermine their beliefs. I pose the fundamental question of collective action: how is the MAGA movement possible?  </span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="70ac052f-1d5c-4188-be90-6063fb5093be" class="cell" data-execution_count="43">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_tweets(article):</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    client <span class="op">=</span> OpenAI(</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        max_retries<span class="op">=</span><span class="dv">3</span>,</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        timeout<span class="op">=</span><span class="fl">80.0</span>,</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    messages <span class="op">=</span> [</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        {</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>            <span class="st">"role"</span>: <span class="st">"system"</span>,</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>            <span class="st">"content"</span>: <span class="st">''' You write a variety of different types of social media posts about sociology articles.</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="st">If you perform well, everyone gets a raise, while there are negative consequences if the posts don't get views.</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="st">NEVER USE HASHTAGS.</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>,</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        },</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        {</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>            <span class="st">"role"</span>: <span class="st">"user"</span>,</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>            <span class="st">"content"</span>: <span class="ss">f"""Generate ten tweets using each style about this sociology article:</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="ss">            </span></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="ss">      </span><span class="sc">{</span>article<span class="sc">}</span></span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="ss">      </span></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="ss">      """</span>,</span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>        },</span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>    completion <span class="op">=</span> client.chat.completions.create(</span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>        model <span class="op">=</span> <span class="st">'gpt-4-turbo-preview'</span>,     <span class="co">#   model="gpt-3.5-turbo" is 20x cheaper but isn't as insightiful</span></span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>        functions<span class="op">=</span>[</span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>            {</span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>                <span class="st">"name"</span>: <span class="st">"generate_tweets"</span>,</span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>                <span class="st">"description"</span>: <span class="st">"Create social media posts based on an article abstract."</span>,</span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>                <span class="st">"parameters"</span>: GenerateTweets.model_json_schema(),</span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>            },</span>
-<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>        ],</span>
-<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>        n<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>        messages<span class="op">=</span>messages,</span>
-<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> json.loads(completion.choices[<span class="dv">0</span>].message.function_call.arguments)</span>
-<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>    tweets <span class="op">=</span> [{<span class="st">'type'</span>: tweet_type.split(<span class="st">'_'</span>)[<span class="dv">0</span>], <span class="st">'text'</span>: t[<span class="st">'content'</span>]} <span class="cf">for</span> tweet_type <span class="kw">in</span> r <span class="cf">for</span> t <span class="kw">in</span> r[tweet_type]]</span>
-<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>    <span class="co">#return tweets</span></span>
-<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(tweets)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="b95ad29d-f8d9-4cd2-a46c-c1956d7ec478" class="cell" data-execution_count="44">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> make_tweets(article)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="5455d55f-11ae-42c5-958b-6ff1558b9296" class="cell" data-execution_count="45">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>r</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="45">
-<div>
-
-
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">type</th>
-<th data-quarto-table-cell-role="th">text</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">0</td>
-<td>summary</td>
-<td>Hank Johnston explores MAGAism's big tent approach in "THE MAGA MOVEMENT’S BIG UMBRELLA," highlighting its blend of nationalism, populism, and far-right extremism. #Mobilization</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">1</td>
-<td>summary</td>
-<td>Johnston's article dives into how MAGAism merges majority nationalism with various forms of right-wing extremism, offering a comprehensive analysis of its persistence. #MobilizationJournal</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">2</td>
-<td>summary</td>
-<td>"THE MAGA MOVEMENT’S BIG UMBRELLA" outlines five key entry points into MAGAism, from majoritarian nationalism to extreme white supremacism. #Sociology</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">3</td>
-<td>summary</td>
-<td>Johnston examines the role of social media in magnifying MAGAism, from spreading misinformation to fueling far-right extremism. #DigitalSociety</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">4</td>
-<td>summary</td>
-<td>The dynamics of MAGAism's growth are dissected in Hank Johnston's recent article, showing how diverse groups unite under its banner. #PoliticalMovements</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">5</td>
-<td>insight</td>
-<td>MAGAism draws power from a "big-umbrella" strategy, showing the complexity of modern social movements. #HankJohnston</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">6</td>
-<td>insight</td>
-<td>Emotional narratives and flexible identities are key to MAGA's cohesion, despite its diverse constituents. #SocialIdentity</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">7</td>
-<td>insight</td>
-<td>Social media's role in modern politics is undeniable, as seen in MAGA's growth. Johnston's research sheds light on this dynamic. #TechImpact</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">8</td>
-<td>insight</td>
-<td>Johnston's analysis reveals how MAGAism is more than just political ideology; it's a movement with deep roots in American society. #CulturalDynamics</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">9</td>
-<td>insight</td>
-<td>The blending of majoritarian nationalism and populism under the MAGA umbrella showcases the evolution of extremist movements. #ExtremismResearch</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
-<td>announce</td>
-<td>New article by Hank Johnston, "THE MAGA MOVEMENT’S BIG UMBRELLA," examines how MAGAism encompasses a broad array of extremist ideologies. Find it in the latest issue of Mobilization. https://doi.org/10.17813/1086-671X-28-4-409</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">11</td>
-<td>announce</td>
-<td>Out now: Hank Johnston's insightful piece on MAGAism's wide-reaching impact across nationalism, conservatism, and beyond in Mobilization. Don't miss it! https://doi.org/10.17813/1086-671X-28-4-409</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">12</td>
-<td>announce</td>
-<td>Explore the complexities of MAGAism with Hank Johnston's "THE MAGA MOVEMENT’S BIG UMBRELLA" in Mobilization's newest issue. A must-read for anyone studying political movements. https://doi.org/10.17813/1086-671X-28-4-409</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">13</td>
-<td>announce</td>
-<td>Hank Johnston breaks down MAGAism's broad appeal and sustaining power in his latest article for Mobilization. A deep dive into one of today's most influential social movements. https://doi.org/10.17813/1086-671X-28-4-409</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">14</td>
-<td>announce</td>
-<td>Just published: Hank Johnston's analysis of MAGAism as a "big-umbrella" social movement in Mobilization. An essential read for understanding the forces driving contemporary political currents. https://doi.org/10.17813/1086-671X-28-4-409</td>
-</tr>
-</tbody>
-</table>
-
+<p>For our purposes, we are using to create a JSON schema that we want ChatGPT to follow.</p>
+<div id="a1e4b3c8" class="cell" data-execution_count="70">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ThreadTweet.model_json_schema()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="70">
+<pre><code>{'properties': {'content': {'default': [],
+   'description': 'A list of tweets that together form a thread about the article, summarizing its key points and implications, engaging the audience, and encouraging further discussion or reading. No hashtags.',
+   'items': {'type': 'string'},
+   'title': 'Content',
+   'type': 'array'}},
+ 'title': 'ThreadTweet',
+ 'type': 'object'}</code></pre>
 </div>
 </div>
-</div>
-<p>Still loves the hastags</p>
-<div id="b7eef7d2-a3a0-41a0-acff-4d9b8d07f591" class="cell" data-execution_count="47">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> remove_hashtags(tweet):</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span><span class="st">' '</span>.join([w <span class="cf">for</span> w <span class="kw">in</span> tweet.split() <span class="cf">if</span> <span class="st">'#'</span> <span class="kw">not</span> <span class="kw">in</span> w])</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>r[<span class="st">'text'</span>] <span class="op">=</span> r[<span class="st">'text'</span>].<span class="bu">apply</span>(remove_hashtags)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>r</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="47">
-<div>
-
-
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">type</th>
-<th data-quarto-table-cell-role="th">text</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">0</td>
-<td>summary</td>
-<td>Hank Johnston explores MAGAism's big tent approach in "THE MAGA MOVEMENT’S BIG UMBRELLA," highlighting its blend of nationalism, populism, and far-right extremism.</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">1</td>
-<td>summary</td>
-<td>Johnston's article dives into how MAGAism merges majority nationalism with various forms of right-wing extremism, offering a comprehensive analysis of its persistence.</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">2</td>
-<td>summary</td>
-<td>"THE MAGA MOVEMENT’S BIG UMBRELLA" outlines five key entry points into MAGAism, from majoritarian nationalism to extreme white supremacism.</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">3</td>
-<td>summary</td>
-<td>Johnston examines the role of social media in magnifying MAGAism, from spreading misinformation to fueling far-right extremism.</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">4</td>
-<td>summary</td>
-<td>The dynamics of MAGAism's growth are dissected in Hank Johnston's recent article, showing how diverse groups unite under its banner.</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">5</td>
-<td>insight</td>
-<td>MAGAism draws power from a "big-umbrella" strategy, showing the complexity of modern social movements.</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">6</td>
-<td>insight</td>
-<td>Emotional narratives and flexible identities are key to MAGA's cohesion, despite its diverse constituents.</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">7</td>
-<td>insight</td>
-<td>Social media's role in modern politics is undeniable, as seen in MAGA's growth. Johnston's research sheds light on this dynamic.</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">8</td>
-<td>insight</td>
-<td>Johnston's analysis reveals how MAGAism is more than just political ideology; it's a movement with deep roots in American society.</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">9</td>
-<td>insight</td>
-<td>The blending of majoritarian nationalism and populism under the MAGA umbrella showcases the evolution of extremist movements.</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">10</td>
-<td>announce</td>
-<td>New article by Hank Johnston, "THE MAGA MOVEMENT’S BIG UMBRELLA," examines how MAGAism encompasses a broad array of extremist ideologies. Find it in the latest issue of Mobilization. https://doi.org/10.17813/1086-671X-28-4-409</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">11</td>
-<td>announce</td>
-<td>Out now: Hank Johnston's insightful piece on MAGAism's wide-reaching impact across nationalism, conservatism, and beyond in Mobilization. Don't miss it! https://doi.org/10.17813/1086-671X-28-4-409</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">12</td>
-<td>announce</td>
-<td>Explore the complexities of MAGAism with Hank Johnston's "THE MAGA MOVEMENT’S BIG UMBRELLA" in Mobilization's newest issue. A must-read for anyone studying political movements. https://doi.org/10.17813/1086-671X-28-4-409</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">13</td>
-<td>announce</td>
-<td>Hank Johnston breaks down MAGAism's broad appeal and sustaining power in his latest article for Mobilization. A deep dive into one of today's most influential social movements. https://doi.org/10.17813/1086-671X-28-4-409</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">14</td>
-<td>announce</td>
-<td>Just published: Hank Johnston's analysis of MAGAism as a "big-umbrella" social movement in Mobilization. An essential read for understanding the forces driving contemporary political currents. https://doi.org/10.17813/1086-671X-28-4-409</td>
-</tr>
-</tbody>
-</table>
-
+<div id="2a716c73" class="cell" data-execution_count="71">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>GenerateTweets.model_json_schema()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="71">
+<pre><code>{'$defs': {'AnnounceTweet': {'properties': {'content': {'description': 'A tweet announcing a new article. Text must include the author and title.  No Hastags',
+     'title': 'Content',
+     'type': 'string'}},
+   'required': ['content'],
+   'title': 'AnnounceTweet',
+   'type': 'object'},
+  'InsightTweet': {'properties': {'content': {'description': 'Simple, understandable statement distilling a complex social science concept.  No Hastags',
+     'title': 'Content',
+     'type': 'string'}},
+   'required': ['content'],
+   'title': 'InsightTweet',
+   'type': 'object'},
+  'SummaryTweet': {'properties': {'content': {'description': 'A concise version of the abstract in tweet format. No Hastags',
+     'title': 'Content',
+     'type': 'string'}},
+   'required': ['content'],
+   'title': 'SummaryTweet',
+   'type': 'object'},
+  'ThreadTweet': {'properties': {'content': {'default': [],
+     'description': 'A list of tweets that together form a thread about the article, summarizing its key points and implications, engaging the audience, and encouraging further discussion or reading. No hashtags.',
+     'items': {'type': 'string'},
+     'title': 'Content',
+     'type': 'array'}},
+   'title': 'ThreadTweet',
+   'type': 'object'}},
+ 'properties': {'summary_tweets': {'default': [],
+   'description': 'A list of SummaryTweet instances.',
+   'items': {'$ref': '#/$defs/SummaryTweet'},
+   'title': 'Summary Tweets',
+   'type': 'array'},
+  'insight_tweets': {'default': [],
+   'description': 'A list of InsightTweet instances.',
+   'items': {'$ref': '#/$defs/InsightTweet'},
+   'title': 'Insight Tweets',
+   'type': 'array'},
+  'announce_tweets': {'default': [],
+   'description': 'A list of AnnounceTweet instances.',
+   'items': {'$ref': '#/$defs/AnnounceTweet'},
+   'title': 'Announce Tweets',
+   'type': 'array'},
+  'thread_tweets': {'default': [],
+   'description': 'A list of ThreadTweet instances.',
+   'items': {'$ref': '#/$defs/ThreadTweet'},
+   'title': 'Thread Tweets',
+   'type': 'array'}},
+ 'title': 'GenerateTweets',
+ 'type': 'object'}</code></pre>
 </div>
 </div>
+<div id="8467aa7d-645f-41d2-b9c9-b9052023f4b2" class="cell" data-execution_count="43">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># I put in the introduction when using GPT4 because it actually uses the extra information.</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>article <span class="op">=</span> <span class="st">'''</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="st">TITLE: The MAGA Movement's Big Umbrella</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="st">AUTHOR: Hank Johnston</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="st">JOURNAL: Mobilization: An International Quarterly (2024) 28 (4): 409–433.</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="st">LINK: https://doi.org/10.17813/1086-671X-28-4-409</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="st">ABSTRACT: This article considers the phenomenon of MAGAism as a general, “big-umbrella” social movement to probe its structure and persistence. Drawing on my research on nationalist movements, I discuss the narrative flexibility and emotional power of nationalism and consider how these characteristics fuel a particularly resentful form of majoritarian nationalism—MAGAism. I identify five points of entry for MAGA participation, starting with this bitter majoritarian nationalism, then populism, then traditional conservatism, next a Trumpian personality cult, and ending with the alt-right’s extreme white supremacism and fascism. I then discuss two forces that gather this unlikely collection of groups and individuals under the MAGA umbrella: (1) the flexibility of social identity and how it allows status-threat narratives to subsume and redirect economic and political claims; (2) the social media environment of the 2020s, cut loose from the traditional gatekeepers of news and information, wherein maximizing hits—not accuracy—is the guiding principle. On the one hand, social media intensify the prominence of the demagogic celebrity at the helm of the Republican Party, Donald J. Trump. On the other hand, alt-right trolls compete for prominence by seeking outrageousness and shock value, enhanced by algorithms that create a closed information environment. These social media trends pull MAGA adherents further to the right by inflaming public discourse and building the movement on lies and conspiracies.</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="st">INTRODUCTION: The rise of far right-wing parties and extremist groups is now a topic of deep concern among social scientists who study collective action and contentious politics.  As a reader of this special issue of Mobilization, this trend no doubt has been on your mind a lot, as it has been on mine—especially the challenges it poses to democratic institutions.i In the U.S. today, one of the major political parties actively restricts voting rights, bans books in libraries, embraces conspiracies, flaunts constitutional principles, and limits public-school curricula on topics such as diversity, slavery, gender and sexuality (Natanson 2023a, 2023b)—and millions of MAGA supporters are okay with it (Baker, Perry, and Whitehead, 2020; Enders, Farhart, Miller, and Uscinski 2022; Graham et al. 2021; Stewart 2023). Further along the right-wing spectrum, one increasingly finds rising antisemitism, white Christian nationalism, gun-toting bullies, and misogynists (see Davis and Kettrey’s study in this issue) in the U.S. public sphere, raising parallels with European history in the early twentieth century and its brown shirts and black shirts (rather than today’s polo shirts and tac gear). While violence and intolerance are not unique to the extreme right, these trends reflect a synergy between the current political environment, eroding democratic norms, and—among more and more citizens in democratic states—authoritarian and even fascist tendencies (Jackson 2021; Wintemute, Robinson, Tomish 2022). In the U.S. these trends can be grouped under the umbrella of MAGAism where majoritarian nationalism mixes with populism, far-right extremism, and a virtual (in both meanings of the term) potpourri of themes such as antiwokeness, antivaccines, parental rights, gun rights, sovereign citizenry, science denial, masculinity, the lie of a stolen 2020 election, Trumpian personality cult, white replacement, QAnon conspiracies, among many others. This essay contextualizes the special issue articles by situating them in relation to trends in the U.S., which I discuss under the big umbrella of MAGAism. Following Tarrow (2021: 175), common usage in the popular press, and Trump himself, I consider MAGAism as a general social movement, one that encompasses the rightward shift of public discourse and politics in the U.S. plus the array of mobilizing groups that drive it.ii  I will offer a somewhat personalized essay that draws on insights from my work on the power (and danger) of nationalism to analyze a particularly resentful majoritarian nationalism—often labeled white nationalism in the U.S.  (Graham et al. 2021; Mudde 2019, Miller-Idriss, 2021; Young 2017). I am interested not only in militias, alt-right trolls, and white-supremacist churches,  but—more broadly—the mechanisms that allow these extremists to be grouped with millions of middle-class working citizens who come to the movement via parental-rights groups, suburban bible-study groups, or as antivaxxers, tradition-alists, or Constitutionalists.  MAGAism is a big-tent collective action—a movement with continuity, shared identity, diverse claims and political objectives, networked by an array of groups and organizations—the movement’s mobilizing structures that mostly stand apart from the Republican Party. I will identify the movement’s patterns of discourse and how it is structured to help understand the complexity, die-hard loyalty, denialism, and conspiracies that unite millions of MAGAistas in the face of factual evidence that should undermine their beliefs. I pose the fundamental question of collective action: how is the MAGA movement possible?  </span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<div id="70ac052f-1d5c-4188-be90-6063fb5093be" class="cell" data-execution_count="72">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_tweets(article):</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    client <span class="op">=</span> OpenAI(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        max_retries<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        timeout<span class="op">=</span><span class="fl">90.0</span>, </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    messages <span class="op">=</span> [</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        {</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>            <span class="st">"role"</span>: <span class="st">"system"</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>            <span class="st">"content"</span>: <span class="st">''' You write a variety of different types of social media posts about sociology articles.</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="st">If you perform well, everyone gets a raise, while there are negative consequences if the posts don't get views.</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="st">NEVER USE HASHTAGS.</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>,</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>        },</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>        {</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>            <span class="st">"role"</span>: <span class="st">"user"</span>,</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>            <span class="st">"content"</span>: <span class="ss">f"""Generate five tweets of each style plus a tweet thread about this sociology article:</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="ss">            </span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="ss">      </span><span class="sc">{</span>article<span class="sc">}</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="ss">      </span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="ss">      """</span>,</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>        },</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    completion <span class="op">=</span> client.chat.completions.create(</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>        model <span class="op">=</span> <span class="st">'gpt-4-turbo-preview'</span>,     <span class="co">#   model="gpt-3.5-turbo" is 20x cheaper but isn't as insightful </span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>        functions<span class="op">=</span>[</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>            {</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>                <span class="st">"name"</span>: <span class="st">"generate_tweets"</span>,</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>                <span class="st">"description"</span>: <span class="st">"Create multiple social media posts, including a tweet thread, based on an article abstract."</span>,</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>                <span class="st">"parameters"</span>: GenerateTweets.model_json_schema(),</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>            },</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>        ],</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>        n<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>        messages<span class="op">=</span>messages,</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> json.loads(completion.choices[<span class="dv">0</span>].message.function_call.arguments)</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>    tweets <span class="op">=</span> [{<span class="st">'type'</span>: tweet_type.split(<span class="st">'_'</span>)[<span class="dv">0</span>], <span class="st">'text'</span>: t[<span class="st">'content'</span>]} <span class="cf">for</span> tweet_type <span class="kw">in</span> r <span class="cf">for</span> t <span class="kw">in</span> r[tweet_type]]</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(tweets)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="b95ad29d-f8d9-4cd2-a46c-c1956d7ec478" class="cell" data-execution_count="66">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>tdf <span class="op">=</span> make_tweets(article)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="aad55f97" class="cell" data-execution_count="67">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Grouping and printing with check for list in 'text' column</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> type_name, group <span class="kw">in</span> tdf.groupby(<span class="st">'type'</span>):</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Type: </span><span class="sc">{</span>type_name<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> index, row <span class="kw">in</span> group.iterrows():</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(row[<span class="st">'text'</span>], <span class="bu">list</span>):</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> item <span class="kw">in</span> row[<span class="st">'text'</span>]:</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>                <span class="bu">print</span>(<span class="ss">f"- </span><span class="sc">{</span>item<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"- </span><span class="sc">{</span>row[<span class="st">'text'</span>]<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Type: announce
+- New research by Hank Johnston in Mobilization investigates the MAGA movement's vast reach and the social forces fueling its endurance. The MAGA Movement's Big Umbrella: https://doi.org/10.17813/1086-671X-28-4-409
+Type: insight
+- Nationalism's emotional power can forge unlikely alliances, proving pivotal in the rise of movements like MAGAism.
+- Social identity's flexibility allows economic and political grievances to be reframed as status threats, fueling movements like MAGA.
+- In an era where hits trump accuracy, social media perpetuates echo chambers that magnify polarizing figures and ideologies.
+- The MAGA movement’s diverse entry points reflect the complex appeal of political identities in today's rapidly changing society.
+- Extremist movements leverage the digital age's vast reach, showcasing the dramatic impact of social media on political mobilization.
+Type: summary
+- Hank Johnston's article in Mobilization delves into MAGAism, exploring its roots in resentful majoritarian nationalism and its five diverse points of entry.
+- Johnston identifies social media and the flexibility of social identity as key forces uniting diverse MAGA groups under one 'big umbrella.'
+- Through examining MAGAism, the article discusses how emotional narratives and nationalism fuel the movement's persistence and growth.
+- The MAGA movement is dissected for its structure: from majoritarian nationalism to extreme white supremacism, uncovering its complex foundation.
+- Johnston's research highlights how the 2020s social media landscape propels MAGAism, intensifying right-wing shifts through misinformation and shock value.
+Type: thread
+- In Hank Johnston's latest article, 'The MAGA Movement's Big Umbrella,' he navigates the multifaceted world of MAGAism, a movement defined by its emotional engagement and diverse entry points.
+- MAGAism isn't just about one ideology. It’s about majoritarian nationalism, populism, conservatism, a Trumpian personality cult, and extreme white supremacism, all under one 'big umbrella.'
+- Johnston points out the crucial role of social identity flexibility and the chaotic 2020s social media landscape in unifying these varied elements, creating a powerful force despite conflicting views.
+- The rise of the MAGA movement signifies more than political allegiance; it's about the emotional narratives and nationalistic feelings that resonate with many, pushing the discourse further right through misinformation.
+- Lastly, this comprehensive look at MAGAism sheds light on how digital platforms contribute to the movement's momentum, emphasizing the need for awareness in the digital age. A must-read for anyone looking to understand the complexities of modern political movements.</code></pre>
+</div>
+</div>
+<p>GPT4 doesn’t always follow the directions, for example, there’s only one “announce” style tweet, but GPT3.5 gets lost more often when something complex is going on, such as the tweet thread.</p>
 
 
 
