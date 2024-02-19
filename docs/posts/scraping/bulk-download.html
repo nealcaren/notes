@@ -419,7 +419,8 @@ future: &lt;Future finished exception=NetworkError('Protocol error (Target.detac
 pyppeteer.errors.NetworkError: Protocol error (Target.detachFromTarget): No session with given id</code></pre>
 </div>
 </div>
-<p>Using this approach, it took me eight minutes to download 100 URLs. The main slowdown is slow-loading pages. I have timeout arbitrarily set to 30 seconds. Setting in longer might load a few more pages, but would also slow down the process since some pages will never load. I usually also run it twice on the same list to catch URLs that were missed either because of errors on my end or in the cloud.</p>
+<p>Using this approach, it took me five minutes to go through the list 100 URLs. I didn’t get every webpage, and I usually also run it twice on the same list to catch URLs that were missed either because of errors on my end or in the cloud.</p>
+<p>The main delay is slow-loading pages. I have the timeout arbitrarily set to 30 seconds. Setting in longer might load one or two more more pages, but would also slow down the process since some pages will never load.</p>
 
 
 
