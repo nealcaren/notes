@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/abstracts/first-question.html",
       "/posts/abstracts/synthetic-abstracts.html",
       "/posts/scraping/bulk-download.html",
       "/posts/function-calling/pydantic-sm.html",
