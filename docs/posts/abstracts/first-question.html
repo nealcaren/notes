@@ -10,7 +10,7 @@
 <meta name="dcterms.date" content="2024-02-21">
 <meta name="description" content="Using NLTK to pull out the first sentence of an abstract.">
 
-<title>notes - How many sociology journal articles start with a question? 5%</title>
+<title>notes - What percent of sociology journal abstracts start with a question?</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -106,7 +106,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <link rel="stylesheet" href="../../styles.css">
-<meta name="twitter:title" content="notes - How many sociology journal articles start with a question? 5%">
+<meta name="twitter:title" content="notes - What percent of sociology journal abstracts start with a question?">
 <meta name="twitter:description" content="Using NLTK to pull out the first sentence of an abstract.">
 <meta name="twitter:image" content="questions.webp">
 <meta name="twitter:card" content="summary_large_image">
@@ -154,7 +154,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <header id="title-block-header" class="quarto-title-block default page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
-      <h1 class="title">How many sociology journal articles start with a question? 5%</h1>
+      <h1 class="title">What percent of sociology journal abstracts start with a question?</h1>
                   <div>
         <div class="description">
           Using NLTK to pull out the first sentence of an abstract.
@@ -192,7 +192,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<div id="293146f2" class="cell" data-execution_count="12">
+<div id="293146f2" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> nltk</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>nltk.download(<span class="st">'punkt'</span>)</span>
@@ -203,10 +203,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 [nltk_data]   Package punkt is already up-to-date!</code></pre>
 </div>
 </div>
-<div id="f3581a49" class="cell" data-execution_count="13">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_json(<span class="st">'sociology-abstracts.json'</span>)</span>
+<div id="f3581a49" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_json(<span class="st">'https://raw.githubusercontent.com/nealcaren/notes/main/posts/abstracts/sociology-abstracts.json'</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Year'</span>].value_counts()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="13">
+<div class="cell-output cell-output-display" data-execution_count="2">
 <pre><code>Year
 2018    1076
 2017    1068
@@ -221,9 +221,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 Name: count, dtype: int64</code></pre>
 </div>
 </div>
-<div id="4d41a419" class="cell" data-execution_count="14">
+<div id="4d41a419" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Source title'</span>].value_counts()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="14">
+<div class="cell-output cell-output-display" data-execution_count="3">
 <pre><code>Source title
 Demography                               890
 Journal of Marriage and Family           757
@@ -256,7 +256,7 @@ Work and Occupations                     142
 Name: count, dtype: int64</code></pre>
 </div>
 </div>
-<div id="9b1ef441" class="cell" data-execution_count="15">
+<div id="9b1ef441" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> first_sentence(abstract):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    sentences <span class="op">=</span> sent_tokenize(abstract)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> sentences[<span class="dv">0</span>]</span>
@@ -264,15 +264,15 @@ Name: count, dtype: int64</code></pre>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply the function to the 'Abstract' column to create the new feature</span></span>
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_first_sentence'</span>] <span class="op">=</span> df[<span class="st">'Abstract'</span>].<span class="bu">apply</span>(first_sentence)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="d3de18d7" class="cell" data-execution_count="16">
+<div id="d3de18d7" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_first_sentence_punctuation'</span>] <span class="op">=</span> df[<span class="st">'abstract_first_sentence'</span>].<span class="bu">str</span>[<span class="op">-</span><span class="dv">1</span>]</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_starts_with_a_question'</span>] <span class="op">=</span> df[<span class="st">'abstract_first_sentence_punctuation'</span>] <span class="op">==</span> <span class="st">'?'</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_starts_with_a_question'</span>].mean()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="16">
+<div class="cell-output cell-output-display" data-execution_count="5">
 <pre><code>0.04899459018066755</code></pre>
 </div>
 </div>
-<div id="7e3fd550" class="cell" data-execution_count="21">
+<div id="7e3fd550" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.ticker <span class="im">as</span> mtick</span>
@@ -285,7 +285,7 @@ Name: count, dtype: int64</code></pre>
 <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>                 df[<span class="st">'abstract_starts_with_a_question'</span>], normalize<span class="op">=</span><span class="st">'index'</span>).sort_values(by<span class="op">=</span><span class="va">True</span>)[<span class="va">True</span>].plot(kind<span class="op">=</span><span class="st">'barh'</span>, figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">6</span>))</span>
 <span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Add a title and possibly adjust other aspects like labels</span></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'What percent of journal articles start with a question?'</span>)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'What percent of journal abstracts start with a question?'</span>)</span>
 <span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">''</span>)</span>
 <span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">''</span>)</span>
 <span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a></span>
@@ -305,10 +305,10 @@ Name: count, dtype: int64</code></pre>
 </div>
 </div>
 </div>
-<div id="ee3f66d1" class="cell" data-execution_count="22">
+<div id="ee3f66d1" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_first_word'</span>] <span class="op">=</span>  df[<span class="st">'abstract_first_sentence'</span>].<span class="bu">str</span>.split().<span class="bu">str</span>[<span class="dv">0</span>]</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>df[df[<span class="st">'abstract_starts_with_a_question'</span>]][<span class="st">'abstract_first_word'</span>].value_counts()[:<span class="dv">10</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="22">
+<div class="cell-output cell-output-display" data-execution_count="7">
 <pre><code>abstract_first_word
 How     163
 What     65
@@ -323,10 +323,10 @@ This      7
 Name: count, dtype: int64</code></pre>
 </div>
 </div>
-<div id="f8c5460b" class="cell" data-execution_count="23">
+<div id="f8c5460b" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>dfa <span class="op">=</span> df[df[<span class="st">'abstract_starts_with_a_question'</span>]<span class="op">==</span><span class="va">True</span>].copy()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="c9dd8cc0" class="cell" data-execution_count="24">
+<div id="c9dd8cc0" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1: Prepare the Data</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Categorize 'abstract_first_word' into "How", "What", "Why", and "Other"</span></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>dfa[<span class="st">'category'</span>] <span class="op">=</span> dfa[<span class="st">'abstract_first_word'</span>].<span class="bu">apply</span>(<span class="kw">lambda</span> x: x <span class="cf">if</span> x <span class="kw">in</span> [<span class="st">'How'</span>, <span class="st">'What'</span>, <span class="st">'Why'</span>] <span class="cf">else</span> <span class="st">'Other'</span>)</span>
