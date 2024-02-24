@@ -10,7 +10,7 @@
 <meta name="dcterms.date" content="2024-02-23">
 <meta name="description" content="Using Sentence-Transformers to measure the distance between a concept and a text.">
 
-<title>notes - Measuring text similarity with sentence embeddings</title>
+<title>notes - Measuring text similarity with sentence embeddings, Part II</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -109,7 +109,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <link rel="stylesheet" href="../../styles.css">
-<meta name="twitter:title" content="notes - Measuring text similarity with sentence embeddings">
+<meta name="twitter:title" content="notes - Measuring text similarity with sentence embeddings, Part II">
 <meta name="twitter:description" content="Using Sentence-Transformers to measure the distance between a concept and a text.">
 <meta name="twitter:image" content="twins.webp">
 <meta name="twitter:card" content="summary_large_image">
@@ -157,7 +157,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <header id="title-block-header" class="quarto-title-block default page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
-      <h1 class="title">Measuring text similarity with sentence embeddings</h1>
+      <h1 class="title">Measuring text similarity with sentence embeddings, Part II</h1>
                   <div>
         <div class="description">
           Using Sentence-Transformers to measure the distance between a concept and a text.
@@ -533,7 +533,7 @@ Similarity between Grateful Dead show and thankful attitude is 0.20.</code></pre
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="sentence-embeddings_files/figure-html/cell-23-output-1.png" class="img-fluid figure-img"></p>
+<p><img src="sentence-embeddings-ii_files/figure-html/cell-23-output-1.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
@@ -810,7 +810,7 @@ Quintile 16:</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="sentence-embeddings_files/figure-html/cell-25-output-1.png" class="img-fluid figure-img"></p>
+<p><img src="sentence-embeddings-ii_files/figure-html/cell-25-output-1.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1036,7 +1036,7 @@ Quintile 16:</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="sentence-embeddings_files/figure-html/cell-29-output-1.png" class="img-fluid figure-img"></p>
+<p><img src="sentence-embeddings-ii_files/figure-html/cell-29-output-1.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1081,13 +1081,103 @@ Quintile 16:</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="sentence-embeddings_files/figure-html/cell-30-output-1.png" class="img-fluid figure-img"></p>
+<p><img src="sentence-embeddings-ii_files/figure-html/cell-30-output-1.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>I interpret this as both (1) movements research is not heavily quantitative and (2) abstracts that discuss movement theories and cases spend less time talking about methods, but that’s is probably also true of most articles that are about something rather than methods.</p>
 <p>To do: Can you do math with sentence embeddings, like what’s a similar paper but instead of analyzing surveys, uses in-depth interviews? Here’s a sample code from ChatGPT.</p>
+<div id="cell-50" class="cell" data-execution_count="83">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer, util</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch <span class="im">import</span> nn</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> transform_and_match(text, remove_concept, add_concept, candidates):</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a><span class="co">    Transforms the text by removing one concept and adding another, then finds the nearest match from candidates.</span></span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Initialize the model</span></span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> SentenceTransformer(<span class="st">'all-MiniLM-L6-v2'</span>)</span>
+<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Generate embeddings</span></span>
+<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>    text_embedding <span class="op">=</span> model.encode(text, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a>    remove_embedding <span class="op">=</span> model.encode(remove_concept, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a>    add_embedding <span class="op">=</span> model.encode(add_concept, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a>    candidate_embeddings <span class="op">=</span> model.encode(candidates, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-18"><a href="#cb47-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Perform vector arithmetic (text - remove + add)</span></span>
+<span id="cb47-19"><a href="#cb47-19" aria-hidden="true" tabindex="-1"></a>    transformed_embedding <span class="op">=</span> text_embedding <span class="op">-</span> remove_embedding <span class="op">+</span> add_embedding</span>
+<span id="cb47-20"><a href="#cb47-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-21"><a href="#cb47-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Compute cosine similarities between the transformed embedding and each candidate</span></span>
+<span id="cb47-22"><a href="#cb47-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Ensure all tensors are moved to CPU memory before conversion to NumPy</span></span>
+<span id="cb47-23"><a href="#cb47-23" aria-hidden="true" tabindex="-1"></a>    similarities <span class="op">=</span> util.cos_sim(transformed_embedding, candidate_embeddings).cpu()</span>
+<span id="cb47-24"><a href="#cb47-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-25"><a href="#cb47-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Find the index of the highest similarity score</span></span>
+<span id="cb47-26"><a href="#cb47-26" aria-hidden="true" tabindex="-1"></a>    nearest_match_idx <span class="op">=</span> similarities.argmax()</span>
+<span id="cb47-27"><a href="#cb47-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-28"><a href="#cb47-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Return the nearest matching candidate text</span></span>
+<span id="cb47-29"><a href="#cb47-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> candidates[nearest_match_idx]</span>
+<span id="cb47-30"><a href="#cb47-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-31"><a href="#cb47-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-32"><a href="#cb47-32" aria-hidden="true" tabindex="-1"></a>nearest_match <span class="op">=</span> transform_and_match(text, remove_concept, add_concept, candidates)</span>
+<span id="cb47-33"><a href="#cb47-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-34"><a href="#cb47-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Nearest match: </span><span class="sc">{</span>nearest_match<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Nearest match: A love story that unfolds in the least expected places.</code></pre>
+</div>
+</div>
+<div id="cell-51" class="cell" data-execution_count="88">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer, util</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compute_semantic_direction_cmd(document, concept_pairs):</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Initialize the model</span></span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> SentenceTransformer(<span class="st">'all-MiniLM-L6-v2'</span>)</span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Generate embedding for the document</span></span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>    doc_embedding <span class="op">=</span> model.encode(document, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Generate embeddings for the concept pairs and compute the semantic direction vector</span></span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>    direction_vectors <span class="op">=</span> []</span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (positive, negative) <span class="kw">in</span> concept_pairs:</span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>        pos_embedding <span class="op">=</span> model.encode(positive, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>        neg_embedding <span class="op">=</span> model.encode(negative, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>        direction_vectors.append(pos_embedding <span class="op">-</span> neg_embedding)</span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Convert list of tensors to a single tensor and move to CPU</span></span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>    direction_vectors_tensor <span class="op">=</span> torch.stack(direction_vectors).cpu()</span>
+<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Aggregate the direction vectors to derive a single vector for the semantic direction</span></span>
+<span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a>    semantic_direction <span class="op">=</span> torch.mean(direction_vectors_tensor, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb49-24"><a href="#cb49-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-25"><a href="#cb49-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Move document embedding to CPU</span></span>
+<span id="cb49-26"><a href="#cb49-26" aria-hidden="true" tabindex="-1"></a>    doc_embedding_cpu <span class="op">=</span> doc_embedding.cpu()</span>
+<span id="cb49-27"><a href="#cb49-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-28"><a href="#cb49-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Project the document embedding onto the semantic direction</span></span>
+<span id="cb49-29"><a href="#cb49-29" aria-hidden="true" tabindex="-1"></a>    projection <span class="op">=</span> torch.dot(doc_embedding_cpu, semantic_direction) <span class="op">/</span> torch.norm(semantic_direction)</span>
+<span id="cb49-30"><a href="#cb49-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-31"><a href="#cb49-31" aria-hidden="true" tabindex="-1"></a>    <span class="co"># CMD score is the projection length which indicates engagement with the semantic direction</span></span>
+<span id="cb49-32"><a href="#cb49-32" aria-hidden="true" tabindex="-1"></a>    cmd_score <span class="op">=</span> projection.item()</span>
+<span id="cb49-33"><a href="#cb49-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-34"><a href="#cb49-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cmd_score</span>
+<span id="cb49-35"><a href="#cb49-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-36"><a href="#cb49-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Example usage with the provided concept pairs</span></span>
+<span id="cb49-37"><a href="#cb49-37" aria-hidden="true" tabindex="-1"></a>document <span class="op">=</span> <span class="st">"The policy initiatives reflect a high tax approach rather than a free market one."</span></span>
+<span id="cb49-38"><a href="#cb49-38" aria-hidden="true" tabindex="-1"></a>concept_pairs <span class="op">=</span> [</span>
+<span id="cb49-39"><a href="#cb49-39" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"liberal"</span>, <span class="st">"conservative"</span>),</span>
+<span id="cb49-40"><a href="#cb49-40" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"progressive"</span>, <span class="st">"unprogressive"</span>),</span>
+<span id="cb49-41"><a href="#cb49-41" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"democrat"</span>, <span class="st">"republican"</span>),</span>
+<span id="cb49-42"><a href="#cb49-42" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"untraditional"</span>, <span class="st">"traditional"</span>)</span>
+<span id="cb49-43"><a href="#cb49-43" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb49-44"><a href="#cb49-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-45"><a href="#cb49-45" aria-hidden="true" tabindex="-1"></a>cmd_score <span class="op">=</span> compute_semantic_direction_cmd(document, concept_pairs)</span>
+<span id="cb49-46"><a href="#cb49-46" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Document's engagement with the concept of 'conservative' relative to 'liberal': </span><span class="sc">{</span>cmd_score<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Document's engagement with the concept of 'conservative' relative to 'liberal': -0.013234419748187065</code></pre>
+</div>
+</div>
 
 
 
