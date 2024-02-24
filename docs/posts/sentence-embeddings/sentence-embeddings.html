@@ -431,19 +431,67 @@ Similarity between Grateful Dead show and thankful attitude is 0.20.</code></pre
 </div>
 </div>
 <p>Great. Now an <a href="https://meridian.allenpress.com/mobilization/article-abstract/28/4/491/498084/UNDOING-VIOLENCE-IN-THE-MANOSPHERE-INCELS?redirectedFrom=fulltext">example</a> from something publishing in <a href="http://mobilizationjournal.org">Mobilization</a>.</p>
-<div id="cell-26" class="cell" data-execution_count="65">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>abstract_moby <span class="op">=</span> <span class="st">"Role exit is a complex process that can be especially complicated for extremists, whose identities are stigmatized. Such stigmatization often leads extremists to seek refuge in “free spaces” where they may insulate themselves from the mainstream and celebrate their ideology amongst likeminded individuals. Yet, stigma may also push those who desire to exit an extremist role to seek out their own free spaces where they can disengage from extremist ideology with others who wish to disengage. In this study, we analyze posts obtained from two Incel digital forums: a forum of active Incels and a forum of exiting Incels. We compared the ways that active and exiting Incels use free spaces to situate themselves inside or outside of this extremist community. Our analysis demonstrates that free spaces, which social movement scholars argue foster commitment among extremists, may offer exiting extremists insulation from active extremists while also keeping them tethered to hostile ideology."</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>string_string_sim(abstract_moby, movement_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-26" class="cell" data-execution_count="84">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>abstract_sf <span class="op">=</span> (</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"All around the world, school-entry cohorts are organized on an annual "</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"calendar so that the age of students in the same cohort differs by up to "</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"one year. It is a well-established finding that this age gap entails a "</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"consequential (dis)advantage for academic performance referred to as the "</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"relative age effect (RAE). This study contributes to a recent strand of "</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"research that has turned to investigate the RAE on non-academic outcomes "</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"such as personality traits. An experimental setup is used to estimate the "</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"causal effect of monthly age on cognitive effort in a sample of 798 "</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"fifth-grade students enrolled in the Spanish educational system, "</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"characterized by strict enrolment rules. Participants performed three "</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"different real-effort tasks under three different incentive conditions: no "</span></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"rewards; material rewards; and material and status rewards. We observe "</span></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"that older students outwork their youngest peers by two-fifths of a "</span></span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"standard deviation, but only when material rewards for performance are in "</span></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"place. Despite the previously reported higher taste for competition among "</span></span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"the older students within a school-entry cohort, we do not find that the "</span></span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RAE on cognitive effort increases after inducing competition for peer "</span></span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"recognition. Finally, the study also provides suggestive evidence of a "</span></span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"larger RAE among boys and students from lower social strata. Implications "</span></span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"for sociological research on educational inequality are discussed. To "</span></span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"conclude, we outline policy recommendations such as implementing "</span></span>
+<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"evaluation tools that nudge teachers toward being mindful of relative age "</span></span>
+<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"differences."</span></span>
+<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-27"><a href="#cb29-27" aria-hidden="true" tabindex="-1"></a>string_string_sim(abstract_moby, movement_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Similarity is 0.36.</code></pre>
 </div>
 </div>
 <p>An a non-movements <a href="https://academic.oup.com/sf/advance-article-abstract/doi/10.1093/sf/soae023/7612022">article from Social Forces</a>.</p>
 <div id="cell-28" class="cell" data-execution_count="66">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>abstract_sf<span class="op">=</span> <span class="st">'''All around the world, school-entry cohorts are organized on an annual calendar so that the age of students in the same cohort differs by up to one year. It is a well-established finding that this age gap entails a consequential (dis)advantage for academic performance referred to as the relative age effect (RAE). This study contributes to a recent strand of research that has turned to investigate the RAE on non-academic outcomes such as personality traits. An experimental setup is used to estimate the causal effect of monthly age on cognitive effort in a sample of 798 fifth-grade students enrolled in the Spanish educational system, characterized by strict enrolment rules. Participants performed three different real-effort tasks under three different incentive conditions: no rewards; material rewards; and material and status rewards. We observe that older students outwork their youngest peers by two-fifths of a standard deviation, but only when material rewards for performance are in place. Despite the previously reported higher taste for competition among the older students within a school-entry cohort, we do not find that the RAE on cognitive effort increases after inducing competition for peer recognition. Finally, the study also provides suggestive evidence of a larger RAE among boys and students from lower social strata. Implications for sociological research on educational inequality are discussed. To conclude, we outline policy recommendations such as implementing evaluation tools that nudge teachers toward being mindful of relative age differences.'''</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>string_string_sim(abstract_sf, movement_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>abstract_sf <span class="op">=</span> (</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"All around the world, school-entry cohorts are organized on an annual "</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"calendar so that the age of students in the same cohort differs by up to "</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"one year. It is a well-established finding that this age gap entails a "</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"consequential (dis)advantage for academic performance referred to as the "</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"relative age effect (RAE). This study contributes to a recent strand of "</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"research that has turned to investigate the RAE on non-academic outcomes "</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"such as personality traits. An experimental setup is used to estimate the "</span></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"causal effect of monthly age on cognitive effort in a sample of 798 "</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"fifth-grade students enrolled in the Spanish educational system, "</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"characterized by strict enrolment rules. Participants performed three "</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"different real-effort tasks under three different incentive conditions: no "</span></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"rewards; material rewards; and material and status rewards. We observe "</span></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"that older students outwork their youngest peers by two-fifths of a "</span></span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"standard deviation, but only when material rewards for performance are in "</span></span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"place. Despite the previously reported higher taste for competition among "</span></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"the older students within a school-entry cohort, we do not find that the "</span></span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RAE on cognitive effort increases after inducing competition for peer "</span></span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"recognition. Finally, the study also provides suggestive evidence of a "</span></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"larger RAE among boys and students from lower social strata. Implications "</span></span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"for sociological research on educational inequality are discussed. To "</span></span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"conclude, we outline policy recommendations such as implementing "</span></span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"evaluation tools that nudge teachers toward being mindful of relative age "</span></span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"differences."</span></span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>string_string_sim(abstract_sf, movement_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Similarity is -0.04.</code></pre>
 </div>
@@ -1039,7 +1087,46 @@ Quintile 16:</code></pre>
 </div>
 </div>
 <p>I interpret this as both (1) movements research is not heavily quantitative and (2) abstracts that discuss movement theories and cases spend less time talking about methods, but that’s is probably also true of most articles that are about something rather than methods.</p>
-<p>To do: Can you do math with sentence embeddings, like what’s a similar paper but instead of analyzing surveys, uses in-depth interviews?</p>
+<p>To do: Can you do math with sentence embeddings, like what’s a similar paper but instead of analyzing surveys, uses in-depth interviews? Here’s a sample code from ChatGPT.</p>
+<div id="cell-50" class="cell" data-execution_count="83">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer, util</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch <span class="im">import</span> nn</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> transform_and_match(text, remove_concept, add_concept, candidates):</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a><span class="co">    Transforms the text by removing one concept and adding another, then finds the nearest match from candidates.</span></span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Initialize the model</span></span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> SentenceTransformer(<span class="st">'all-MiniLM-L6-v2'</span>)</span>
+<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Generate embeddings</span></span>
+<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>    text_embedding <span class="op">=</span> model.encode(text, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a>    remove_embedding <span class="op">=</span> model.encode(remove_concept, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a>    add_embedding <span class="op">=</span> model.encode(add_concept, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a>    candidate_embeddings <span class="op">=</span> model.encode(candidates, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-18"><a href="#cb47-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Perform vector arithmetic (text - remove + add)</span></span>
+<span id="cb47-19"><a href="#cb47-19" aria-hidden="true" tabindex="-1"></a>    transformed_embedding <span class="op">=</span> text_embedding <span class="op">-</span> remove_embedding <span class="op">+</span> add_embedding</span>
+<span id="cb47-20"><a href="#cb47-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-21"><a href="#cb47-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Compute cosine similarities between the transformed embedding and each candidate</span></span>
+<span id="cb47-22"><a href="#cb47-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Ensure all tensors are moved to CPU memory before conversion to NumPy</span></span>
+<span id="cb47-23"><a href="#cb47-23" aria-hidden="true" tabindex="-1"></a>    similarities <span class="op">=</span> util.cos_sim(transformed_embedding, candidate_embeddings).cpu()</span>
+<span id="cb47-24"><a href="#cb47-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-25"><a href="#cb47-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Find the index of the highest similarity score</span></span>
+<span id="cb47-26"><a href="#cb47-26" aria-hidden="true" tabindex="-1"></a>    nearest_match_idx <span class="op">=</span> similarities.argmax()</span>
+<span id="cb47-27"><a href="#cb47-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-28"><a href="#cb47-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Return the nearest matching candidate text</span></span>
+<span id="cb47-29"><a href="#cb47-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> candidates[nearest_match_idx]</span>
+<span id="cb47-30"><a href="#cb47-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-31"><a href="#cb47-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-32"><a href="#cb47-32" aria-hidden="true" tabindex="-1"></a>nearest_match <span class="op">=</span> transform_and_match(text, remove_concept, add_concept, candidates)</span>
+<span id="cb47-33"><a href="#cb47-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-34"><a href="#cb47-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Nearest match: </span><span class="sc">{</span>nearest_match<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Nearest match: A love story that unfolds in the least expected places.</code></pre>
+</div>
+</div>
 
 
 
