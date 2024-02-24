@@ -195,36 +195,41 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<div id="cell-1" class="cell" data-execution_count="2">
+<p>A recent talk made me think about measuring the distance between a concept and a text. I know that, for example, Dustin Stolz and Marshall A. Taylor developed “<a href="https://www.textmapping.com">Concept Mover’s Distance</a>” and that folks like <a href="https://www.lauraknelson.com">Laura K. Nelson</a> have done nifty things with <em>word embeddings</em>, but I haven’t done much with them in years. This work has primarily used word embeddings, which are constructed using algorithms like Word2Vec, GloVe, or FastText, which analyze a corpus of text and learn to represent words as vectors based on the context in which words appear and their co-occurrence with other words. These vectors capture semantic and syntactic similarities among words. Sentences, paragraphs, or longer texts are represented as the average value of their word embeddings, and the method works quite well for measuring how similar two texts are based on the distance between their word embeddings. In contrast, <em>sentence embeddings</em> generated from models like BERT or other transformer-based architectures do not merely combine word vectors. Instead, these models are trained to understand the context and relationships between words in a sentence, producing embeddings that capture the nuanced meaning of the entire sentence. Fine-tuning these models on specific tasks, such as text similarity, further enhances their ability to represent sentences in a way that aligns with the task’s requirements. The resulting <em><a href="https://www.sbert.net/#">sentence transformer</a></em> models seem to be what most people are using, so I thought I would play around with them. Plus Dustin and Marshall’s code <a href="https://culturalcartography.gitlab.io/text2map/">is all in R</a> which I’m not great at.</p>
+<div id="cell-2" class="cell" data-execution_count="49">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pip install <span class="op">-</span>U <span class="op">--</span>q sentence<span class="op">-</span>transformers</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+    - Avoid using `tokenizers` before the fork if possible
+    - Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Note: you may need to restart the kernel to use updated packages.</code></pre>
 </div>
 </div>
-<div id="cell-2" class="cell" data-execution_count="3">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer, util</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">'display.max_colwidth'</span>, <span class="dv">200</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>/Users/nealcaren/anaconda3/envs/whisperplus/lib/python3.11/site-packages/transformers/utils/generic.py:441: UserWarning: torch.utils._pytree._register_pytree_node is deprecated. Please use torch.utils._pytree.register_pytree_node instead.
-  _torch_pytree._register_pytree_node(</code></pre>
+<div id="cell-3" class="cell" data-execution_count="50">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer, util</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Show wider columns</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">'display.max_colwidth'</span>, <span class="dv">200</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter out all warnings</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</div>
-<div id="cell-3" class="cell" data-execution_count="4">
+<p>There are <a href="https://www.sbert.net/docs/pretrained_models.html">lots of different pretrained SentenceTransformer models</a> to try. Since I don’t have a GPU, I’m using the smallest decent one.</p>
+<div id="cell-5" class="cell" data-execution_count="51">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> SentenceTransformer(<span class="st">'all-MiniLM-L6-v2'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>/Users/nealcaren/anaconda3/envs/whisperplus/lib/python3.11/site-packages/transformers/utils/generic.py:309: UserWarning: torch.utils._pytree._register_pytree_node is deprecated. Please use torch.utils._pytree.register_pytree_node instead.
-  _torch_pytree._register_pytree_node(
-/Users/nealcaren/anaconda3/envs/whisperplus/lib/python3.11/site-packages/transformers/utils/generic.py:309: UserWarning: torch.utils._pytree._register_pytree_node is deprecated. Please use torch.utils._pytree.register_pytree_node instead.
-  _torch_pytree._register_pytree_node(</code></pre>
 </div>
-</div>
-<div id="cell-4" class="cell" data-execution_count="5">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>model.encode(<span class="st">'We study apples.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="5">
+<p>Encoding a sentence returns an array, with each position measuring some latent aspect of the sentence. The <code>all-MiniLM-L6-v2</code> model has 384 dimensions, meaning it represents sentences in a 384-dimensional space where each dimension captures a different aspect of the sentence’s semantic and syntactic properties.</p>
+<div id="cell-7" class="cell" data-execution_count="52">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>model.encode(<span class="st">'We study apples.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="52">
 <pre><code>array([ 7.25412294e-02,  2.94132698e-02, -1.04851276e-02,  7.10855499e-02,
        -1.60725769e-02, -1.44585697e-02,  2.01909002e-02, -1.64043065e-02,
         5.85170425e-02,  4.42925990e-02,  3.38043720e-02, -3.70339900e-02,
@@ -324,37 +329,38 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       dtype=float32)</code></pre>
 </div>
 </div>
-<div id="cell-5" class="cell" data-execution_count="6">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">len</span>(model.encode(<span class="st">'We study apples.'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="6">
+<div id="cell-8" class="cell" data-execution_count="53">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">len</span>(model.encode(<span class="st">'We study apples.'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="53">
 <pre><code>384</code></pre>
 </div>
 </div>
-<div id="cell-6" class="cell" data-execution_count="7">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> concept_string_sim(concept, </span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                       text</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>):</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    concept_emedding <span class="op">=</span> model.encode(concept)</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> word <span class="kw">in</span> text.split():</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>        word_embedding <span class="op">=</span> model.encode(word)</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>        similarity <span class="op">=</span> util.pytorch_cos_sim(concept_emedding, word_embedding)[<span class="dv">0</span>][<span class="dv">0</span>]</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f'Similarity between </span><span class="sc">{</span>word<span class="sc">}</span><span class="ss"> and </span><span class="sc">{</span>concept<span class="sc">}</span><span class="ss"> is </span><span class="sc">{</span>similarity<span class="sc">:.2f}</span><span class="ss">.'</span>)</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    text_embedding <span class="op">=</span> model.encode(text)</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    similarity <span class="op">=</span> util.pytorch_cos_sim(concept_emedding, text_embedding)[<span class="dv">0</span>][<span class="dv">0</span>]</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Similarity between </span><span class="sc">{</span>text<span class="sc">}</span><span class="ss"> and </span><span class="sc">{</span>concept<span class="sc">}</span><span class="ss"> is </span><span class="sc">{</span>similarity<span class="sc">:.2f}</span><span class="ss">.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>A little function to compare the embeddings of a single concept with each word in a sentence, and then the entire sentence. I built this to confirm that sentence embeddings actually do what I think they are doing.</p>
+<div id="cell-10" class="cell" data-execution_count="54">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> concept_string_sim(concept, </span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                       text</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    concept_emedding <span class="op">=</span> model.encode(concept)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> word <span class="kw">in</span> text.split():</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>        word_embedding <span class="op">=</span> model.encode(word)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>        similarity <span class="op">=</span> util.pytorch_cos_sim(concept_emedding, word_embedding)[<span class="dv">0</span>][<span class="dv">0</span>]</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f'Similarity between </span><span class="sc">{</span>word<span class="sc">}</span><span class="ss"> and </span><span class="sc">{</span>concept<span class="sc">}</span><span class="ss"> is </span><span class="sc">{</span>similarity<span class="sc">:.2f}</span><span class="ss">.'</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    text_embedding <span class="op">=</span> model.encode(text)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    similarity <span class="op">=</span> util.pytorch_cos_sim(concept_emedding, text_embedding)[<span class="dv">0</span>][<span class="dv">0</span>]</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Similarity between </span><span class="sc">{</span>text<span class="sc">}</span><span class="ss"> and </span><span class="sc">{</span>concept<span class="sc">}</span><span class="ss"> is </span><span class="sc">{</span>similarity<span class="sc">:.2f}</span><span class="ss">.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-7" class="cell" data-execution_count="32">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>concept_string_sim(<span class="st">'rock'</span>, <span class="st">'Grateful Dead show'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-11" class="cell" data-execution_count="55">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>concept_string_sim(<span class="st">'rock, music'</span>, <span class="st">'Grateful Dead show'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Similarity between Grateful and rock is 0.21.
-Similarity between Dead and rock is 0.40.
-Similarity between show and rock is 0.34.
-Similarity between Grateful Dead show and rock is 0.40.</code></pre>
+<pre><code>Similarity between Grateful and rock, music is 0.18.
+Similarity between Dead and rock, music is 0.37.
+Similarity between show and rock, music is 0.28.
+Similarity between Grateful Dead show and rock, music is 0.36.</code></pre>
 </div>
 </div>
-<div id="cell-8" class="cell" data-execution_count="9">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>concept_string_sim(<span class="st">'thankful attitude'</span>, <span class="st">'Grateful Dead show'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-12" class="cell" data-execution_count="56">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>concept_string_sim(<span class="st">'thankful attitude'</span>, <span class="st">'Grateful Dead show'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Similarity between Grateful and thankful attitude is 0.50.
 Similarity between Dead and thankful attitude is 0.23.
@@ -362,124 +368,141 @@ Similarity between show and thankful attitude is 0.20.
 Similarity between Grateful Dead show and thankful attitude is 0.20.</code></pre>
 </div>
 </div>
-<div id="cell-9" class="cell" data-execution_count="10">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> string_string_sim(text1,</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>                      text2,</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>):</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    text1_embedding <span class="op">=</span> model.encode(text1)</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    text2_embedding <span class="op">=</span> model.encode(text2)</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    similarity <span class="op">=</span> util.pytorch_cos_sim(text1_embedding, text2_embedding)[<span class="dv">0</span>][<span class="dv">0</span>]</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Similarity is </span><span class="sc">{</span>similarity<span class="sc">:.2f}</span><span class="ss">.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>In the first example, the concept “rock, music” shows varying degrees of similarity with each word in the sentence “Grateful Dead show,” with the highest similarity observed with the word “Dead” (0.37), suggesting that the model captures the association between the band “Grateful Dead” and rock music. The overall sentence similarity score (0.36) closely aligns with the highest word similarity score, indicating that sentence embeddings can indeed capture the essence of the concept in relation to the full sentence context.</p>
+<p>In the second case, the concept “thankful attitude” has the highest similarity with the word “Grateful” (0.50), which is intuitive given the semantic closeness of “thankful” and “Grateful.” However, the overall similarity between the entire sentence “Grateful Dead show” and the concept “thankful attitude” is lower (0.20), suggesting that while individual words like “Grateful” strongly resonate with the concept, the context provided by the entire sentence shifts the meaning away from the concept’s core, demonstrating how sentence embeddings can differentiate between the significance of individual words and the collective meaning of a sentence.</p>
+<p>No measuring some sentence similarities.</p>
+<div id="cell-15" class="cell" data-execution_count="57">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> string_string_sim(text1,</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>                      text2,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    text1_embedding <span class="op">=</span> model.encode(text1)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    text2_embedding <span class="op">=</span> model.encode(text2)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    similarity <span class="op">=</span> util.pytorch_cos_sim(text1_embedding, text2_embedding)[<span class="dv">0</span>][<span class="dv">0</span>]</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Similarity is </span><span class="sc">{</span>similarity<span class="sc">:.2f}</span><span class="ss">.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-10" class="cell" data-execution_count="11">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(<span class="st">'We study revolutions.'</span>, <span class="st">'This paper examines social movements.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-16" class="cell" data-execution_count="58">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(<span class="st">'We study revolutions.'</span>, <span class="st">'This paper examines social movements.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Similarity is 0.47.</code></pre>
 </div>
 </div>
-<div id="cell-11" class="cell" data-execution_count="12">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(<span class="st">'We study revolutions.'</span>, <span class="st">'This paper examines health behaviors.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-17" class="cell" data-execution_count="59">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(<span class="st">'We study revolutions.'</span>, <span class="st">'This paper examines health behaviors.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Similarity is 0.18.</code></pre>
 </div>
 </div>
-<div id="cell-12" class="cell" data-execution_count="13">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(<span class="st">'We study revolutions.'</span>, <span class="st">'This paper examines social movements in Algeria during the 1970s.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-18" class="cell" data-execution_count="60">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(<span class="st">'We study revolutions.'</span>, <span class="st">'This paper examines social movements in Algeria during the 1970s.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Similarity is 0.36.</code></pre>
 </div>
 </div>
-<div id="cell-13" class="cell" data-execution_count="14">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>movement_word_list<span class="op">=</span>[<span class="st">'social movement'</span>, <span class="st">'contentious politics'</span>, <span class="st">'mobilization'</span>,]</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>movement_words <span class="op">=</span> <span class="st">', '</span>.join(movement_word_list)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This also worked. Note, however, that the last example had a lower correlation with “We study revolutions.” This is because the the additional information in the sentence, like the country and time, were uncorrelated with the shorter, first sentence. I suspect this means that, on average, longer texts will have a lower correlation with a short, conceptual phrase than shorter texts simply because they are more likely to include different types of information.</p>
+<p>On to measuring a concept. In this case, I’m interested in to what degree a sociological research article’s abstract is about measuring social movements and protest.</p>
+<div id="cell-21" class="cell" data-execution_count="61">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>movement_word_list<span class="op">=</span>[<span class="st">'social movement'</span>, <span class="st">'contentious politics'</span>, <span class="st">'mobilization'</span>,]</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>movement_words <span class="op">=</span> <span class="st">', '</span>.join(movement_word_list)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-14" class="cell" data-execution_count="15">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(movement_words,</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>                      <span class="st">'We study revolutions.'</span>,</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-22" class="cell" data-execution_count="62">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(movement_words,</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>                      <span class="st">'We study revolutions.'</span>,</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Similarity is 0.44.</code></pre>
 </div>
 </div>
-<div id="cell-15" class="cell" data-execution_count="16">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(movement_words,</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>                      <span class="st">'This paper examines health behaviors.'</span>,</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-23" class="cell" data-execution_count="63">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(movement_words,</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>                      <span class="st">'This paper examines health behaviors.'</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Similarity is 0.18.</code></pre>
 </div>
 </div>
-<div id="cell-16" class="cell" data-execution_count="17">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(movement_words,</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>                      <span class="st">'We study revolutions in Algeria.'</span>,</span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-24" class="cell" data-execution_count="64">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(movement_words,</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>                      <span class="st">'We study revolutions in Algeria.'</span>,</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Similarity is 0.42.</code></pre>
 </div>
 </div>
-<div id="cell-17" class="cell" data-execution_count="18">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>abstract_moby <span class="op">=</span> <span class="st">"Role exit is a complex process that can be especially complicated for extremists, whose identities are stigmatized. Such stigmatization often leads extremists to seek refuge in “free spaces” where they may insulate themselves from the mainstream and celebrate their ideology amongst likeminded individuals. Yet, stigma may also push those who desire to exit an extremist role to seek out their own free spaces where they can disengage from extremist ideology with others who wish to disengage. In this study, we analyze posts obtained from two Incel digital forums: a forum of active Incels and a forum of exiting Incels. We compared the ways that active and exiting Incels use free spaces to situate themselves inside or outside of this extremist community. Our analysis demonstrates that free spaces, which social movement scholars argue foster commitment among extremists, may offer exiting extremists insulation from active extremists while also keeping them tethered to hostile ideology."</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>string_string_sim(abstract_moby, movement_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Great. Now an <a href="https://meridian.allenpress.com/mobilization/article-abstract/28/4/491/498084/UNDOING-VIOLENCE-IN-THE-MANOSPHERE-INCELS?redirectedFrom=fulltext">example</a> from something publishing in <a href="http://mobilizationjournal.org">Mobilization</a>.</p>
+<div id="cell-26" class="cell" data-execution_count="65">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>abstract_moby <span class="op">=</span> <span class="st">"Role exit is a complex process that can be especially complicated for extremists, whose identities are stigmatized. Such stigmatization often leads extremists to seek refuge in “free spaces” where they may insulate themselves from the mainstream and celebrate their ideology amongst likeminded individuals. Yet, stigma may also push those who desire to exit an extremist role to seek out their own free spaces where they can disengage from extremist ideology with others who wish to disengage. In this study, we analyze posts obtained from two Incel digital forums: a forum of active Incels and a forum of exiting Incels. We compared the ways that active and exiting Incels use free spaces to situate themselves inside or outside of this extremist community. Our analysis demonstrates that free spaces, which social movement scholars argue foster commitment among extremists, may offer exiting extremists insulation from active extremists while also keeping them tethered to hostile ideology."</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>string_string_sim(abstract_moby, movement_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Similarity is 0.36.</code></pre>
 </div>
 </div>
-<div id="cell-18" class="cell" data-execution_count="19">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>abstract_sf<span class="op">=</span> <span class="st">'''All around the world, school-entry cohorts are organized on an annual calendar so that the age of students in the same cohort differs by up to one year. It is a well-established finding that this age gap entails a consequential (dis)advantage for academic performance referred to as the relative age effect (RAE). This study contributes to a recent strand of research that has turned to investigate the RAE on non-academic outcomes such as personality traits. An experimental setup is used to estimate the causal effect of monthly age on cognitive effort in a sample of 798 fifth-grade students enrolled in the Spanish educational system, characterized by strict enrolment rules. Participants performed three different real-effort tasks under three different incentive conditions: no rewards; material rewards; and material and status rewards. We observe that older students outwork their youngest peers by two-fifths of a standard deviation, but only when material rewards for performance are in place. Despite the previously reported higher taste for competition among the older students within a school-entry cohort, we do not find that the RAE on cognitive effort increases after inducing competition for peer recognition. Finally, the study also provides suggestive evidence of a larger RAE among boys and students from lower social strata. Implications for sociological research on educational inequality are discussed. To conclude, we outline policy recommendations such as implementing evaluation tools that nudge teachers toward being mindful of relative age differences.'''</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>string_string_sim(abstract_sf, movement_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>An a non-movements <a href="https://academic.oup.com/sf/advance-article-abstract/doi/10.1093/sf/soae023/7612022">article from Social Forces</a>.</p>
+<div id="cell-28" class="cell" data-execution_count="66">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>abstract_sf<span class="op">=</span> <span class="st">'''All around the world, school-entry cohorts are organized on an annual calendar so that the age of students in the same cohort differs by up to one year. It is a well-established finding that this age gap entails a consequential (dis)advantage for academic performance referred to as the relative age effect (RAE). This study contributes to a recent strand of research that has turned to investigate the RAE on non-academic outcomes such as personality traits. An experimental setup is used to estimate the causal effect of monthly age on cognitive effort in a sample of 798 fifth-grade students enrolled in the Spanish educational system, characterized by strict enrolment rules. Participants performed three different real-effort tasks under three different incentive conditions: no rewards; material rewards; and material and status rewards. We observe that older students outwork their youngest peers by two-fifths of a standard deviation, but only when material rewards for performance are in place. Despite the previously reported higher taste for competition among the older students within a school-entry cohort, we do not find that the RAE on cognitive effort increases after inducing competition for peer recognition. Finally, the study also provides suggestive evidence of a larger RAE among boys and students from lower social strata. Implications for sociological research on educational inequality are discussed. To conclude, we outline policy recommendations such as implementing evaluation tools that nudge teachers toward being mindful of relative age differences.'''</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>string_string_sim(abstract_sf, movement_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Similarity is -0.04.</code></pre>
 </div>
 </div>
-<div id="cell-19" class="cell" data-execution_count="20">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_json(<span class="st">'https://raw.githubusercontent.com/nealcaren/notes/main/posts/abstracts/sociology-abstracts.json'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Great. Results are plausible. Now I’m going to try it out an entire dataset of 10K recent sociology articles.</p>
+<div id="cell-30" class="cell" data-execution_count="67">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_json(<span class="st">'https://raw.githubusercontent.com/nealcaren/notes/main/posts/abstracts/sociology-abstracts.json'</span>)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="bu">len</span>(df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="67">
+<pre><code>9797</code></pre>
 </div>
-<div id="cell-20" class="cell" data-execution_count="21">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>movement_word_embedding <span class="op">=</span> model.encode(movement_words)</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> string_embedding_sim(text1,</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>                      text2_embedding<span class="op">=</span>movement_word_embedding,</span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>):</span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>    text1_embedding <span class="op">=</span> model.encode(text1)</span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>    similarity <span class="op">=</span> util.pytorch_cos_sim(text1_embedding, text2_embedding)[<span class="dv">0</span>][<span class="dv">0</span>].item()</span>
-<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> similarity</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-21" class="cell" data-execution_count="22">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>string_embedding_sim(abstract_moby )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="22">
+<p>I revised the function so that it takes a word embedding, rather than a word for one of the inputs. This way, it only calculates the movement words embedding once, rather than once for each of the 10,000 comparisons. It also outputs just the numeric value of the correlation, rather than a phrase.</p>
+<div id="cell-32" class="cell" data-execution_count="68">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>movement_word_embedding <span class="op">=</span> model.encode(movement_words)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> string_embedding_sim(text1,</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>                      text2_embedding<span class="op">=</span>movement_word_embedding,</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    text1_embedding <span class="op">=</span> model.encode(text1)</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    similarity <span class="op">=</span> util.pytorch_cos_sim(text1_embedding, text2_embedding)[<span class="dv">0</span>][<span class="dv">0</span>].item()</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> similarity</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a><span class="co"># check that it works</span></span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>string_embedding_sim(abstract_moby )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="68">
 <pre><code>0.36133891344070435</code></pre>
 </div>
 </div>
-<div id="cell-22" class="cell" data-execution_count="23">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_movement_similarity'</span>] <span class="op">=</span> df[<span class="st">'Abstract'</span>].<span class="bu">apply</span>(string_embedding_sim)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Applying the function, which uses the smallest model, to my dataframe of 10,000 cases takes about 4 minutes on my MacBook Air with an M2 processor. In contrast, it takes only seconds running in an environment with a GPU, such as Google Colab. Also, you would ideally want to store the article embeddings somewhere rather than discarding them, as the encoding phase of the function is the computationally-intense part.</p>
+<div id="cell-34" class="cell" data-execution_count="69">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_movement_similarity'</span>] <span class="op">=</span> df[<span class="st">'Abstract'</span>].<span class="bu">apply</span>(string_embedding_sim)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-24" class="cell" data-execution_count="24">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_movement_similarity'</span>].hist(bins<span class="op">=</span><span class="dv">20</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Plot the results. Looks pretty normal but with a little right skew, which are presumably the articles that focus on movements.</p>
+<div id="cell-36" class="cell" data-execution_count="70">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_movement_similarity'</span>].hist(bins<span class="op">=</span><span class="dv">20</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="sentence-embeddings_files/figure-html/cell-24-output-1.png" class="img-fluid figure-img"></p>
+<p><img src="sentence-embeddings_files/figure-html/cell-23-output-1.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
-<div id="cell-25" class="cell" data-execution_count="25">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1: Create quintiles</span></span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Quintile'</span>] <span class="op">=</span> pd.qcut(df[<span class="st">'abstract_movement_similarity'</span>], <span class="dv">20</span>, labels<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 2: Filter for the top quarter quintiles (quintiles 15-19)</span></span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>top_half_quintiles <span class="op">=</span> df[df[<span class="st">'Quintile'</span>] <span class="op">&gt;=</span> <span class="dv">15</span>]</span>
-<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 3: Display "Title" and "Source title" for a random sample of 5 rows within each top half quintile</span></span>
-<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> quintile <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">19</span>, <span class="dv">14</span>, <span class="op">-</span><span class="dv">1</span>):</span>
-<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>    sample <span class="op">=</span> top_half_quintiles[top_half_quintiles[<span class="st">'Quintile'</span>] <span class="op">==</span> quintile].sample(n<span class="op">=</span><span class="dv">5</span>)</span>
-<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Quintile </span><span class="sc">{</span>quintile <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">:"</span>)</span>
-<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>    display(sample[[<span class="st">'Source title'</span>, <span class="st">'Title'</span>, <span class="st">'abstract_movement_similarity'</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Next, look at a sample of articles with different similarity scores, sorted by highest to lowest. The measure has some face validity, as the movementness of the articles declines across the clusters.</p>
+<div id="cell-38" class="cell" data-execution_count="71">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1: Create quintiles</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Quintile'</span>] <span class="op">=</span> pd.qcut(df[<span class="st">'abstract_movement_similarity'</span>], <span class="dv">20</span>, labels<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 2: Filter for the top quarter quintiles (quintiles 15-19)</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>top_half_quintiles <span class="op">=</span> df[df[<span class="st">'Quintile'</span>] <span class="op">&gt;=</span> <span class="dv">15</span>]</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 3: Display "Title" and "Source title" for a random sample of 5 rows within each top half quintile</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> quintile <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">19</span>, <span class="dv">14</span>, <span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>    sample <span class="op">=</span> top_half_quintiles[top_half_quintiles[<span class="st">'Quintile'</span>] <span class="op">==</span> quintile].sample(n<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Quintile </span><span class="sc">{</span>quintile <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">:"</span>)</span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>    display(sample[[<span class="st">'Source title'</span>, <span class="st">'Title'</span>, <span class="st">'abstract_movement_similarity'</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Quintile 20:
 Quintile 19:
@@ -502,181 +525,83 @@ Quintile 16:</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">5749</td>
-<td>Qualitative Sociology</td>
-<td>Legitimacy without Mobilization? How Social Justice Organizations Defend their Democratic Credentials</td>
-<td>0.500987</td>
+<td data-quarto-table-cell-role="th">4666</td>
+<td>Sociological Forum</td>
+<td>Going Green: Environmental Protest, Policy, and CO2 Emissions in U.S. States, 1990–2007</td>
+<td>0.439596</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">9191</td>
-<td>Sociological Theory</td>
-<td>Modernity and the Politics of Newness: Unraveling New Time in the Chinese Cultural Revolution, 1966 to 1968</td>
-<td>0.470191</td>
+<td data-quarto-table-cell-role="th">3386</td>
+<td>Social Currents</td>
+<td>Tactics and targets: Explaining shifts in grassroots environmental resistance</td>
+<td>0.476411</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">7308</td>
-<td>Qualitative Sociology</td>
-<td>Becoming a Population: Seeing the State, Being Seen by the State, and the Politics of Eviction in Cape Town</td>
-<td>0.425383</td>
+<td data-quarto-table-cell-role="th">4199</td>
+<td>Mobilization</td>
+<td>Movement-countermovement dynamics and mobilizing the electorate</td>
+<td>0.524236</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">871</td>
+<td data-quarto-table-cell-role="th">1474</td>
+<td>Sociological Forum</td>
+<td>Be Careful What You Wish For: The Ironic Connection Between the Civil Rights Struggle and Today's Divided America</td>
+<td>0.596116</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">8583</td>
+<td>Sociological Inquiry</td>
+<td>The Cultural and the Racial: Stitching Together the Sociology of Race and Ethnicity and the Sociology of Culture</td>
+<td>0.429177</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Source title</th>
+<th data-quarto-table-cell-role="th">Title</th>
+<th data-quarto-table-cell-role="th">abstract_movement_similarity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">7252</td>
+<td>Qualitative Sociology</td>
+<td>The Social Life of the State: Relational Ethnography and Political Sociology</td>
+<td>0.366393</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5255</td>
+<td>Du Bois Review</td>
+<td>Rethinking models of minority political participation: Inter-and intra-group variation in political "styles"</td>
+<td>0.394801</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">5346</td>
 <td>Social Forces</td>
-<td>Environmental threats and political opportunities: Citizen activism in the North Bohemian coal basin</td>
-<td>0.482557</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">4489</td>
-<td>Theory and Society</td>
-<td>Combining transition studies and social movement theory: towards a new research agenda</td>
-<td>0.631707</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">Source title</th>
-<th data-quarto-table-cell-role="th">Title</th>
-<th data-quarto-table-cell-role="th">abstract_movement_similarity</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">9636</td>
-<td>Social Problems</td>
-<td>"Trans Enough": Examining the Boundaries of Transgender-Identity Membership</td>
-<td>0.367395</td>
+<td>The Persuasive Power of Protest. How Protest wins Public Support</td>
+<td>0.363187</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">1123</td>
-<td>Mobilization</td>
-<td>A field-experimental study of emergent mobilization in online collective action</td>
-<td>0.419390</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">248</td>
-<td>Mobilization</td>
-<td>Com/passionate protests: Fighting the deportation of asylum seekers</td>
-<td>0.423252</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">457</td>
-<td>Du Bois Review</td>
-<td>Taking postracialism seriously: From movement mythology to racial formation</td>
-<td>0.400696</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">6373</td>
-<td>Qualitative Sociology</td>
-<td>Life on File: Archival Epistemology and Theory</td>
-<td>0.365092</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">Source title</th>
-<th data-quarto-table-cell-role="th">Title</th>
-<th data-quarto-table-cell-role="th">abstract_movement_similarity</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">4577</td>
-<td>City and Community</td>
-<td>Performative Progressiveness: Accounting for New Forms of Inequality in the Gayborhood</td>
-<td>0.343400</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">8222</td>
-<td>American Journal of Sociology</td>
-<td>From the State to the Street: The Segregated Loss of Childcare and the Institutional Origins of Organizational Deprivation</td>
-<td>0.327435</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">1172</td>
-<td>Sociological Perspectives</td>
-<td>Differences in Public Perceptions and Leaders Perceptions on Hydraulic Fracturing and Shale Development</td>
-<td>0.314416</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">839</td>
-<td>Theory and Society</td>
-<td>The theoretical costs of ignoring childhood: rethinking independence, insecurity, and inequality</td>
-<td>0.334687</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">6857</td>
-<td>Sociological Inquiry</td>
-<td>The Culture of White Space, the Racialized Production of Meaning, and the Jamband Scene</td>
-<td>0.329481</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">Source title</th>
-<th data-quarto-table-cell-role="th">Title</th>
-<th data-quarto-table-cell-role="th">abstract_movement_similarity</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">8118</td>
-<td>Sociological Inquiry</td>
-<td>Assessing Variation and Change in Newspaper Portrayals of Muslims: The influence of the Trump Election and Differences across the United States in Local and National Papers*</td>
-<td>0.289904</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">8015</td>
-<td>Sociological Forum</td>
-<td>Fill the Earth and Subdue It: Christian Nationalism, Ethno-Religious Threat, and Nationalist Pronatalism</td>
-<td>0.292034</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">6354</td>
-<td>Sociological Forum</td>
-<td>The Outsider’s Edge: Geography, Gender, and Sexuality in the Local Color Movement</td>
-<td>0.291755</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">8028</td>
+<td data-quarto-table-cell-role="th">1640</td>
 <td>Social Psychology Quarterly</td>
-<td>Exchange and the Creation of Trust and Solidarity across Cultures</td>
-<td>0.290860</td>
+<td>Samuel Stouffer and Relative Deprivation</td>
+<td>0.362094</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">1287</td>
-<td>American Sociological Review</td>
-<td>The Historical Demography of Racial Segregation</td>
-<td>0.287827</td>
+<td data-quarto-table-cell-role="th">8030</td>
+<td>Sociological Forum</td>
+<td>Broker Wisdom: How Migrants Navigate a Broker-Centric Migration System in Vietnam1,2</td>
+<td>0.403658</td>
 </tr>
 </tbody>
 </table>
@@ -698,34 +623,132 @@ Quintile 16:</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">7416</td>
-<td>Du Bois Review</td>
-<td>Zainichi Koreans, African Americans, and the Racial Politics of Comparison</td>
-<td>0.280232</td>
+<td data-quarto-table-cell-role="th">3620</td>
+<td>Mobilization</td>
+<td>Loud and clear: The effect of protest signals on congressional attention</td>
+<td>0.335533</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">5654</td>
-<td>Sociological Perspectives</td>
-<td>Who Doesn’t Want Democracy? A Multilevel Analysis of Elite and Mass Attitudes</td>
-<td>0.278912</td>
+<td data-quarto-table-cell-role="th">4417</td>
+<td>Gender and Society</td>
+<td>“Manning Up” to be a Good Father: Hybrid Fatherhood, Masculinity, and U.S. Responsible Fatherhood Policy</td>
+<td>0.315162</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">6470</td>
-<td>Symbolic Interaction</td>
-<td>The Everyday Drama of Coproduction in Community Mental Health Services: Analyzing Welfare Workers' Performance as the “Undercover Agent”</td>
-<td>0.270104</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">5474</td>
-<td>Symbolic Interaction</td>
-<td>“Jesus Would Turn the Tables Over”: Five Dimensions of Authenticity Applied to Countercultural Christianity</td>
-<td>0.272482</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">424</td>
+<td data-quarto-table-cell-role="th">9603</td>
 <td>City and Community</td>
-<td>Territories of concern: Vacant housing and perceived disorder on three suburban blocks</td>
-<td>0.272447</td>
+<td>Community Social Capital, Racial Diversity, and Philanthropic Resource Mobilization in the Time of a Pandemic</td>
+<td>0.330078</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">2222</td>
+<td>Sociological Perspectives</td>
+<td>Cultural Capital, Motherhood Capital, and Low-income Immigrant Mothers' Institutional Negotiations</td>
+<td>0.339970</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">6999</td>
+<td>Social Forces</td>
+<td>Emigration and Electoral Outcomes in Mexico: Democratic Diffusion, Clientelism, and Disengagement</td>
+<td>0.326051</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Source title</th>
+<th data-quarto-table-cell-role="th">Title</th>
+<th data-quarto-table-cell-role="th">abstract_movement_similarity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">881</td>
+<td>Sociological Forum</td>
+<td>Changing Childrearing Beliefs Among Indigenous Rural-to-Urban Migrants in El Alto, Bolivia</td>
+<td>0.291009</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3873</td>
+<td>American Journal of Sociology</td>
+<td>Interlock globally, act domestically: Corporate political unity in the 21st century</td>
+<td>0.289036</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2762</td>
+<td>Social Problems</td>
+<td>Moral panic, moral breach: Bernhard goetz, george zimmerman, and racialized news reporting in contested cases of self-defense</td>
+<td>0.302752</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">501</td>
+<td>Du Bois Review</td>
+<td>Race, justice, and desegregation</td>
+<td>0.290871</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">105</td>
+<td>Symbolic Interaction</td>
+<td>Chicago, jazz and marijuana: Howard Becker on Outsiders</td>
+<td>0.308609</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Source title</th>
+<th data-quarto-table-cell-role="th">Title</th>
+<th data-quarto-table-cell-role="th">abstract_movement_similarity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">1024</td>
+<td>Social Problems</td>
+<td>Chilling Effects: Diminished Political Participation among Partners of Formerly Incarcerated Men</td>
+<td>0.267233</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">7057</td>
+<td>Gender and Society</td>
+<td>The Gender Mobility Paradox: Gender Segregation and Women’s Mobility Across Gender-Type Boundaries, 1970–2018</td>
+<td>0.263790</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">7265</td>
+<td>Social Forces</td>
+<td>The Limits of Gaining Rights while Remaining Marginalized: The Deferred Action for Childhood Arrivals (DACA) Program and the Psychological Wellbeing of Latina/o Undocumented Youth</td>
+<td>0.267221</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">873</td>
+<td>Social Currents</td>
+<td>Rethinking organizational decoupling: Fields, power struggles, and work routines</td>
+<td>0.267197</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">6205</td>
+<td>Symbolic Interaction</td>
+<td>Digitalization as “an Agent of Social Change” in a Supermarket Chain: Applying Blumer's Theory of Industrialization in Contemporary Society</td>
+<td>0.271341</td>
 </tr>
 </tbody>
 </table>
@@ -733,25 +756,27 @@ Quintile 16:</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-26" class="cell" data-execution_count="26">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>df.groupby(<span class="st">'Source title'</span>)[<span class="st">'abstract_movement_similarity'</span>].mean().sort_values(ascending<span class="op">=</span><span class="va">True</span>).plot(kind<span class="op">=</span><span class="st">'barh'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Another check. Which journals publish the most movement research?</p>
+<div id="cell-40" class="cell" data-execution_count="72">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>df.groupby(<span class="st">'Source title'</span>)[<span class="st">'abstract_movement_similarity'</span>].mean().sort_values(ascending<span class="op">=</span><span class="va">True</span>).plot(kind<span class="op">=</span><span class="st">'barh'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="sentence-embeddings_files/figure-html/cell-26-output-1.png" class="img-fluid figure-img"></p>
+<p><img src="sentence-embeddings_files/figure-html/cell-25-output-1.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
-<div id="cell-27" class="cell" data-execution_count="27">
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Group by 'Source Title' and find the index of the max 'abstract_movement_similarity' in each group</span></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>idx <span class="op">=</span> df.groupby(<span class="st">'Source title'</span>)[<span class="st">'abstract_movement_similarity'</span>].idxmax()</span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter the DataFrame to keep only the rows with the highest 'abstract_movement_similarity' in each group</span></span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>highest_values_df <span class="op">=</span> df.loc[idx]</span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>display <span class="op">=</span> [<span class="st">'Source title'</span>, <span class="st">'Title'</span>, <span class="st">'abstract_movement_similarity'</span>]</span>
-<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>highest_values_df[display].sort_values(by<span class="op">=</span><span class="st">'abstract_movement_similarity'</span>, ascending<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="27">
+<p>And what’s the most movementy article in each journal?</p>
+<div id="cell-42" class="cell" data-execution_count="73">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Group by 'Source Title' and find the index of the max 'abstract_movement_similarity' in each group</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>idx <span class="op">=</span> df.groupby(<span class="st">'Source title'</span>)[<span class="st">'abstract_movement_similarity'</span>].idxmax()</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter the DataFrame to keep only the rows with the highest 'abstract_movement_similarity' in each group</span></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>highest_values_df <span class="op">=</span> df.loc[idx]</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>display <span class="op">=</span> [<span class="st">'Source title'</span>, <span class="st">'Title'</span>, <span class="st">'abstract_movement_similarity'</span>]</span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>highest_values_df[display].sort_values(by<span class="op">=</span><span class="st">'abstract_movement_similarity'</span>, ascending<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="73">
 <div>
 
 
@@ -939,25 +964,72 @@ Quintile 16:</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-28" class="cell" data-execution_count="28">
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>quantitative_words <span class="op">=</span> <span class="st">', '</span>.join([</span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"surveys"</span>,</span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"experiments"</span>,</span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quasi-experiments"</span>,</span>
-<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"regression analysis"</span>,</span>
-<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"statistical analysis"</span>,</span>
-<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"correlation"</span>,</span>
-<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>])</span>
-<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>quantitative_embedding <span class="op">=</span> model.encode(quantitative_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Can I add to my CV that I have the <a href="https://academic.oup.com/socpro/article-abstract/64/1/133/2670547?redirectedFrom=fulltext">most movementy article</a> in Social Problems?</p>
+<p>Okay, now a different concept. How quantitative is the research?</p>
+<div id="cell-44" class="cell" data-execution_count="74">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>quantitative_words <span class="op">=</span> <span class="st">', '</span>.join([</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"surveys"</span>,</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"experiments"</span>,</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quasi-experiments"</span>,</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"regression analysis"</span>,</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"statistical analysis"</span>,</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"correlation"</span>,</span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>])</span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>quantitative_embedding <span class="op">=</span> model.encode(quantitative_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-29" class="cell" data-execution_count="29">
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_quant_similarity'</span>] <span class="op">=</span> df[<span class="st">'Abstract'</span>].<span class="bu">apply</span>(string_embedding_sim, </span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>                                                       text2_embedding<span class="op">=</span>quantitative_embedding)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-45" class="cell" data-execution_count="75">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_quant_similarity'</span>] <span class="op">=</span> df[<span class="st">'Abstract'</span>].<span class="bu">apply</span>(string_embedding_sim, </span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>                                                       text2_embedding<span class="op">=</span>quantitative_embedding)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-30" class="cell" data-execution_count="30">
-<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>df.groupby(<span class="st">'Source title'</span>)[<span class="st">'abstract_quant_similarity'</span>].mean().sort_values(ascending<span class="op">=</span><span class="va">True</span>).plot(kind<span class="op">=</span><span class="st">'barh'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-46" class="cell" data-execution_count="76">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>df.groupby(<span class="st">'Source title'</span>)[<span class="st">'abstract_quant_similarity'</span>].mean().sort_values(ascending<span class="op">=</span><span class="va">True</span>).plot(kind<span class="op">=</span><span class="st">'barh'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sentence-embeddings_files/figure-html/cell-29-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Very plausible, although I <em>think</em> that <em>SM&amp;R</em> scores highest both because the publish lots of quantitative work plus the abstracts rarely discuss anything but methods, so it’s not quite an apples-to-apples comparison.</p>
+<p>Finally, how are the two concepts related at the abstract level?</p>
+<div id="cell-48" class="cell" data-execution_count="77">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Assuming df is your DataFrame</span></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate the Pearson correlation coefficient</span></span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>correlation <span class="op">=</span> df[<span class="st">'abstract_quant_similarity'</span>].corr(df[<span class="st">'abstract_movement_similarity'</span>])</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Determine the common range for both axes based on the min and max of both series</span></span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>common_range <span class="op">=</span> [</span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">min</span>(df[<span class="st">'abstract_quant_similarity'</span>].<span class="bu">min</span>(), df[<span class="st">'abstract_movement_similarity'</span>].<span class="bu">min</span>()), </span>
+<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">max</span>(df[<span class="st">'abstract_quant_similarity'</span>].<span class="bu">max</span>(), df[<span class="st">'abstract_movement_similarity'</span>].<span class="bu">max</span>())</span>
+<span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb46-14"><a href="#cb46-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-15"><a href="#cb46-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the scatter plot with square dimensions</span></span>
+<span id="cb46-16"><a href="#cb46-16" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))  <span class="co"># Makes the figure square in size</span></span>
+<span id="cb46-17"><a href="#cb46-17" aria-hidden="true" tabindex="-1"></a>plt.scatter(df[<span class="st">'abstract_quant_similarity'</span>], df[<span class="st">'abstract_movement_similarity'</span>], alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb46-18"><a href="#cb46-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-19"><a href="#cb46-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Set the same range for both X and Y axes</span></span>
+<span id="cb46-20"><a href="#cb46-20" aria-hidden="true" tabindex="-1"></a>plt.xlim(common_range)</span>
+<span id="cb46-21"><a href="#cb46-21" aria-hidden="true" tabindex="-1"></a>plt.ylim(common_range)</span>
+<span id="cb46-22"><a href="#cb46-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-23"><a href="#cb46-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-24"><a href="#cb46-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Add a title with the correlation coefficient, formatted to two decimal places</span></span>
+<span id="cb46-25"><a href="#cb46-25" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="ss">f'Scatter Plot of Quantitative vs. Movement Similarity in Abstracts</span><span class="ch">\n</span><span class="ss">Correlation: </span><span class="sc">{</span>correlation<span class="sc">:.2f}</span><span class="ss">'</span>)</span>
+<span id="cb46-26"><a href="#cb46-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-27"><a href="#cb46-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Add x and y labels</span></span>
+<span id="cb46-28"><a href="#cb46-28" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Quantitative Similarity'</span>)</span>
+<span id="cb46-29"><a href="#cb46-29" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'Movement Similarity'</span>)</span>
+<span id="cb46-30"><a href="#cb46-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-31"><a href="#cb46-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Ensure the aspect ratio is equal to make the plot truly square</span></span>
+<span id="cb46-32"><a href="#cb46-32" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">'equal'</span>, adjustable<span class="op">=</span><span class="st">'box'</span>)</span>
+<span id="cb46-33"><a href="#cb46-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-34"><a href="#cb46-34" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -966,49 +1038,8 @@ Quintile 16:</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-31" class="cell" data-execution_count="31">
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Assuming df is your DataFrame</span></span>
-<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate the Pearson correlation coefficient</span></span>
-<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>correlation <span class="op">=</span> df[<span class="st">'abstract_quant_similarity'</span>].corr(df[<span class="st">'abstract_movement_similarity'</span>])</span>
-<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Determine the common range for both axes based on the min and max of both series</span></span>
-<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>common_range <span class="op">=</span> [</span>
-<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">min</span>(df[<span class="st">'abstract_quant_similarity'</span>].<span class="bu">min</span>(), df[<span class="st">'abstract_movement_similarity'</span>].<span class="bu">min</span>()), </span>
-<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">max</span>(df[<span class="st">'abstract_quant_similarity'</span>].<span class="bu">max</span>(), df[<span class="st">'abstract_movement_similarity'</span>].<span class="bu">max</span>())</span>
-<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the scatter plot with square dimensions</span></span>
-<span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))  <span class="co"># Makes the figure square in size</span></span>
-<span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a>plt.scatter(df[<span class="st">'abstract_quant_similarity'</span>], df[<span class="st">'abstract_movement_similarity'</span>], alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
-<span id="cb47-18"><a href="#cb47-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-19"><a href="#cb47-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Set the same range for both X and Y axes</span></span>
-<span id="cb47-20"><a href="#cb47-20" aria-hidden="true" tabindex="-1"></a>plt.xlim(common_range)</span>
-<span id="cb47-21"><a href="#cb47-21" aria-hidden="true" tabindex="-1"></a>plt.ylim(common_range)</span>
-<span id="cb47-22"><a href="#cb47-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-23"><a href="#cb47-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-24"><a href="#cb47-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Add a title with the correlation coefficient, formatted to two decimal places</span></span>
-<span id="cb47-25"><a href="#cb47-25" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="ss">f'Scatter Plot of Quantitative vs. Movement Similarity</span><span class="ch">\n</span><span class="ss">Correlation: </span><span class="sc">{</span>correlation<span class="sc">:.2f}</span><span class="ss">'</span>)</span>
-<span id="cb47-26"><a href="#cb47-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-27"><a href="#cb47-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Add x and y labels</span></span>
-<span id="cb47-28"><a href="#cb47-28" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Abstract Quantitative Similarity'</span>)</span>
-<span id="cb47-29"><a href="#cb47-29" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'Abstract Movement Similarity'</span>)</span>
-<span id="cb47-30"><a href="#cb47-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-31"><a href="#cb47-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Ensure the aspect ratio is equal to make the plot truly square</span></span>
-<span id="cb47-32"><a href="#cb47-32" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">'equal'</span>, adjustable<span class="op">=</span><span class="st">'box'</span>)</span>
-<span id="cb47-33"><a href="#cb47-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-34"><a href="#cb47-34" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="sentence-embeddings_files/figure-html/cell-31-output-1.png" class="img-fluid figure-img"></p>
-</figure>
-</div>
-</div>
-</div>
+<p>I interpret this as both (1) movements research is not heavily quantitative and (2) abstracts that discuss movement theories and cases spend less time talking about methods, but that’s is probably also true of most articles that are about something rather than methods.</p>
+<p>To do: Can you do math with sentence embeddings, like what’s a similar paper but instead of analyzing surveys, uses in-depth interviews?</p>
 
 
 
