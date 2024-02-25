@@ -7,10 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Neal Caren, Associate Professor, Department of Sociology, University of North Carolina, Chapel Hill">
-<meta name="dcterms.date" content="2024-02-23">
-<meta name="description" content="Using Sentence-Transformers to measure the distance between a concept and a text.">
+<meta name="dcterms.date" content="2024-02-25">
+<meta name="description" content="Using sentence transformers to add and subtract concepts.">
 
-<title>notes - Measuring text similarity with sentence embeddings, Part II</title>
+<title>notes - More with sentence embeddings</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -109,9 +109,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <link rel="stylesheet" href="../../styles.css">
-<meta name="twitter:title" content="notes - Measuring text similarity with sentence embeddings, Part II">
-<meta name="twitter:description" content="Using Sentence-Transformers to measure the distance between a concept and a text.">
-<meta name="twitter:image" content="twins.webp">
+<meta name="twitter:title" content="notes - More with sentence embeddings">
+<meta name="twitter:description" content="Using sentence transformers to add and subtract concepts.">
+<meta name="twitter:image" content="professor.webp">
 <meta name="twitter:card" content="summary_large_image">
 </head>
 
@@ -157,10 +157,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <header id="title-block-header" class="quarto-title-block default page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
-      <h1 class="title">Measuring text similarity with sentence embeddings, Part II</h1>
+      <h1 class="title">More with sentence embeddings</h1>
                   <div>
         <div class="description">
-          Using Sentence-Transformers to measure the distance between a concept and a text.
+          Using sentence transformers to add and subtract concepts.
         </div>
       </div>
                           <div class="quarto-categories">
@@ -176,7 +176,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">February 23, 2024</p>
+        <p class="date">February 25, 2024</p>
       </div>
     </div>
     
@@ -195,419 +195,110 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<p>A recent talk made me think about measuring the distance between a concept and a text. I know that, for example, Dustin Stolz and Marshall A. Taylor developed “<a href="https://www.textmapping.com">Concept Mover’s Distance</a>” and that folks like <a href="https://www.lauraknelson.com">Laura K. Nelson</a> have done nifty things with <em>word embeddings</em>, but I haven’t done much with them in years. This work has primarily used word embeddings, which are constructed using algorithms like Word2Vec, GloVe, or FastText, which analyze a corpus of text and learn to represent words as vectors based on the context in which words appear and their co-occurrence with other words. These vectors capture semantic and syntactic similarities among words. Sentences, paragraphs, or longer texts are represented as the average value of their word embeddings, and the method works quite well for measuring how similar two texts are based on the distance between their word embeddings. In contrast, <em>sentence embeddings</em> generated from models like BERT or other transformer-based architectures do not merely combine word vectors. Instead, these models are trained to understand the context and relationships between words in a sentence, producing embeddings that capture the nuanced meaning of the entire sentence. Fine-tuning these models on specific tasks, such as text similarity, further enhances their ability to represent sentences in a way that aligns with the task’s requirements. The resulting <em><a href="https://www.sbert.net/#">sentence transformer</a></em> models seem to be what most people are using, so I thought I would play around with them. Plus Dustin and Marshall’s code <a href="https://culturalcartography.gitlab.io/text2map/">is all in R</a> which I’m not great at.</p>
-<div id="cell-2" class="cell" data-execution_count="49">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pip install <span class="op">-</span>U <span class="op">--</span>q sentence<span class="op">-</span>transformers</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
-To disable this warning, you can either:
-    - Avoid using `tokenizers` before the fork if possible
-    - Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)</code></pre>
+<p>This is a followup to an early post on <a href="https://nealcaren.github.io/notes/posts/sentence-embeddings/sentence-embeddings.html">sentence embeddings</a>. I wanted to investigate what it looks like when you you add or subtract concept embeddings before finding the nearest matching text.</p>
+<div id="cell-2" class="cell" data-execution_count="65">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer, util</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Show wider columns</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">"display.max_colwidth"</span>, <span class="dv">600</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter out all warnings</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Note: you may need to restart the kernel to use updated packages.</code></pre>
+<p>Using the same sentence transformer model and corpus of sociological abstracts as before.</p>
+<div id="cell-4" class="cell" data-execution_count="66">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> SentenceTransformer(<span class="st">"all-MiniLM-L6-v2"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</div>
-<div id="cell-3" class="cell" data-execution_count="50">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer, util</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Show wider columns</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">'display.max_colwidth'</span>, <span class="dv">200</span>)</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter out all warnings</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>There are <a href="https://www.sbert.net/docs/pretrained_models.html">lots of different pretrained SentenceTransformer models</a> to try. Since I don’t have a GPU, I’m using the smallest decent one.</p>
-<div id="cell-5" class="cell" data-execution_count="51">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> SentenceTransformer(<span class="st">'all-MiniLM-L6-v2'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Encoding a sentence returns an array, with each position measuring some latent aspect of the sentence. The <code>all-MiniLM-L6-v2</code> model has 384 dimensions, meaning it represents sentences in a 384-dimensional space where each dimension captures a different aspect of the sentence’s semantic and syntactic properties.</p>
-<div id="cell-7" class="cell" data-execution_count="52">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>model.encode(<span class="st">'We study apples.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="52">
-<pre><code>array([ 7.25412294e-02,  2.94132698e-02, -1.04851276e-02,  7.10855499e-02,
-       -1.60725769e-02, -1.44585697e-02,  2.01909002e-02, -1.64043065e-02,
-        5.85170425e-02,  4.42925990e-02,  3.38043720e-02, -3.70339900e-02,
-       -1.01375952e-02,  1.51030989e-02, -2.33681127e-02, -7.01107532e-02,
-       -6.28457516e-02, -1.98269282e-02, -2.56151836e-02, -3.29240002e-02,
-       -3.28812934e-02,  1.20462896e-02,  2.59449407e-02, -9.30627715e-03,
-        3.87127437e-02,  5.07903211e-02,  1.87327876e-03, -3.24000195e-02,
-       -3.31559330e-02, -2.26897225e-02, -3.54236215e-02,  5.46763092e-02,
-        9.66718495e-02,  3.60654816e-02, -5.42746857e-02, -6.75004860e-03,
-        1.40686721e-01, -5.24841994e-02,  2.66690422e-02, -1.14018116e-02,
-       -5.27682193e-02,  7.28323534e-02,  2.73659322e-02,  1.07277647e-01,
-        1.61659811e-02,  3.81597877e-02, -1.69903729e-02, -3.23689356e-02,
-        2.42316276e-02,  6.92270622e-02, -7.24644810e-02,  5.75410959e-04,
-       -2.30131280e-02, -6.04602210e-02,  2.60792784e-02,  6.71790168e-02,
-        9.09342691e-02, -3.36206444e-02,  7.23590478e-02, -1.65215111e-03,
-        3.39566097e-02, -8.45273733e-02, -4.85875309e-02,  3.91481146e-02,
-        9.04154778e-03, -8.98436904e-02, -5.66358864e-02,  4.21869494e-02,
-       -2.75326185e-02,  8.08383152e-03,  3.66940014e-02,  2.62768455e-02,
-        4.43452112e-02,  8.13365355e-02,  4.25574370e-02,  4.02889028e-02,
-        1.33797051e-02, -5.26551530e-02, -1.71313528e-03, -3.53252031e-02,
-       -1.33084031e-02, -3.56830396e-02, -8.78533255e-03, -2.92915851e-04,
-       -5.95996482e-03,  1.08087016e-02, -3.73279974e-02,  1.11694261e-02,
-       -8.32256749e-02,  3.41632962e-02,  1.11821033e-02, -4.44804654e-02,
-       -5.93070313e-02,  2.85391472e-02, -5.28932542e-05,  1.43566700e-02,
-        7.79099949e-03, -4.66752164e-02,  3.37223820e-02,  1.38128072e-01,
-       -2.48398129e-02,  6.67299479e-02,  4.20545265e-02,  6.46362547e-03,
-       -2.01197024e-02, -4.62081917e-02, -7.40140006e-02, -6.16762936e-02,
-        6.25649691e-02,  5.63399047e-02,  5.71039356e-02, -1.97048280e-02,
-       -1.04044281e-01,  1.12997763e-01,  7.35701993e-02, -5.85305728e-02,
-        5.75302951e-02,  2.13396046e-02,  2.31305137e-02, -1.74588244e-02,
-       -1.42283470e-03,  9.98423249e-02, -5.42779267e-02, -4.08335775e-02,
-        3.16505209e-02, -6.30080476e-02,  5.79967070e-03, -6.57705620e-33,
-        9.47775226e-03, -2.89162844e-02,  5.21772802e-02,  4.72146124e-02,
-        1.75573980e-03, -2.80149970e-02,  6.52783411e-03,  6.76577762e-02,
-        1.11630604e-01, -5.42772980e-03, -1.63363609e-02,  1.93208605e-02,
-       -6.67217327e-03,  3.95874586e-03,  6.84757829e-02, -4.26633768e-02,
-       -5.80286346e-02,  4.60271128e-02, -6.45208359e-02, -1.97640937e-02,
-       -4.20666821e-02, -1.40169218e-01,  1.41780432e-02, -4.24528383e-02,
-       -7.28586018e-02, -4.38546352e-02,  2.99364813e-02, -1.22642733e-01,
-        1.05384283e-01, -9.39285476e-03,  4.56614830e-02,  4.46087569e-02,
-       -7.81959221e-02, -2.15675607e-02, -1.61162820e-02,  1.18166637e-02,
-        1.05830543e-01,  4.55662869e-02,  2.54090354e-02,  7.13379355e-04,
-       -4.73194495e-02,  6.20454252e-02,  1.28243357e-01, -1.05106169e-02,
-        6.04844540e-02,  4.86876108e-02,  6.08739592e-02,  7.04808533e-02,
-       -3.78209017e-02,  1.76480156e-03, -7.23417252e-02, -4.73359115e-02,
-        3.92539166e-02, -5.92344292e-02, -2.03246195e-02,  1.21152870e-01,
-        2.25762613e-02, -2.12923903e-02, -7.87275955e-02,  1.72557738e-02,
-       -1.17437020e-02,  4.75608334e-02,  2.89987470e-03,  2.87241656e-02,
-       -7.83866942e-02,  1.22669660e-01, -7.32923672e-02, -2.76942160e-02,
-        3.90719483e-03,  5.07837161e-02, -1.27230436e-01, -1.96105265e-03,
-        1.29499817e-02, -2.39144196e-03, -1.02660574e-01, -3.95029709e-02,
-        2.90869810e-02,  1.89506123e-03, -1.57893542e-02, -1.35825286e-02,
-       -1.47497458e-02, -7.59655535e-02, -2.41609924e-02, -4.64349203e-02,
-       -5.03189899e-02,  1.03728287e-01,  5.30537264e-03, -4.08360064e-02,
-        4.37239483e-02,  1.50352474e-02,  1.78553362e-03,  2.78608631e-02,
-       -1.33840907e-02, -1.94217525e-02, -6.97820038e-02,  3.64022021e-33,
-       -3.52125727e-02, -3.46545912e-02, -1.97930746e-02,  3.53415050e-02,
-        4.72753681e-02, -3.01812422e-02, -2.71848068e-02, -4.41191671e-03,
-       -5.37364073e-02, -3.98576930e-02, -5.23934960e-02,  2.20293589e-02,
-       -1.31326532e-02,  3.97575926e-03,  5.15052769e-03, -5.09656556e-02,
-        2.74809133e-02,  6.49610087e-02, -3.33442353e-02,  3.82365957e-02,
-       -8.04736614e-02,  4.02408168e-02,  1.55164497e-02, -3.17362957e-02,
-       -8.52044765e-03, -1.36113567e-02, -1.03016114e-02, -1.63739058e-03,
-       -3.56106050e-02,  4.95722368e-02,  3.19658928e-02, -1.06780723e-01,
-       -6.47186339e-02, -5.92985041e-02,  7.48166954e-03,  3.27526592e-02,
-       -2.17823554e-02, -3.67993712e-02, -1.45561453e-02,  5.68174422e-02,
-        5.13046794e-02,  2.38617416e-02, -5.04206121e-02,  7.14061782e-02,
-        5.55717610e-02,  9.42208767e-02, -2.91015077e-02,  1.10552333e-01,
-       -1.50970956e-02,  1.36306453e-02,  2.84949895e-02,  1.54124191e-02,
-       -9.30073187e-02, -7.49932304e-02,  3.89047265e-02,  6.32112427e-03,
-        1.68052688e-02, -5.48552349e-02, -4.07663062e-02,  3.40671390e-02,
-       -2.44489089e-02, -6.63542328e-03,  1.33677274e-02,  4.33265902e-02,
-       -6.07616976e-02, -2.95820832e-03, -8.81790649e-03,  3.45228761e-02,
-       -4.97724488e-02,  4.87365052e-02,  5.39725199e-02,  2.30813660e-02,
-       -6.28042817e-02, -1.07893415e-01, -4.70633470e-02,  2.30335053e-02,
-       -1.66683551e-02, -6.54008314e-02, -5.05928211e-02,  3.11856903e-02,
-        8.44117161e-03,  6.16906621e-02, -1.53189339e-02,  6.40073717e-02,
-        2.83199176e-02,  2.28565577e-02,  3.77516486e-02,  2.01664753e-02,
-       -4.26778495e-02, -1.64321400e-02, -7.81823099e-02, -3.34092714e-02,
-        3.54452953e-02, -1.01244465e-01, -7.63411000e-02, -1.36826950e-08,
-       -6.46132380e-02, -4.54020202e-02,  7.10007921e-02, -1.07585511e-03,
-        9.78543423e-03,  4.50233184e-02, -7.06218481e-02,  7.65154064e-02,
-        1.31740945e-03, -2.06936337e-02, -5.31158149e-02,  4.04155143e-02,
-       -7.19135329e-02,  7.89430514e-02,  5.02120666e-02,  7.71357790e-02,
-        9.33832824e-02,  7.45651722e-02, -4.75667641e-02, -5.17647667e-03,
-       -4.44874056e-02,  3.04975566e-02, -6.90343650e-03,  8.24641958e-02,
-       -1.22354254e-02,  6.76435754e-02,  6.36463240e-03,  2.63797827e-02,
-        4.96475771e-02,  8.34565535e-02,  3.48740071e-02,  2.49225888e-02,
-       -9.88677517e-02, -5.98776303e-02,  3.49258445e-03, -6.12113327e-02,
-       -2.36107334e-02,  2.68156715e-02,  2.23525390e-02,  9.43851192e-03,
-       -1.19599409e-01, -6.57922998e-02, -2.84594391e-02,  3.78113380e-03,
-       -3.77423279e-02,  6.28536614e-03, -4.52296101e-02,  7.04570040e-02,
-       -7.60547956e-03,  7.97596648e-02, -2.58326419e-02, -3.47822644e-02,
-        8.89370292e-02,  8.53143539e-03,  4.75420151e-03,  1.21760555e-02,
-        3.13673206e-02, -1.13887928e-01, -6.46701753e-02,  7.35506192e-02,
-        9.01015177e-02, -3.20984498e-02,  4.94505614e-02, -1.10336766e-03],
-      dtype=float32)</code></pre>
-</div>
-</div>
-<div id="cell-8" class="cell" data-execution_count="53">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">len</span>(model.encode(<span class="st">'We study apples.'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="53">
-<pre><code>384</code></pre>
-</div>
-</div>
-<p>A little function to compare the embeddings of a single concept with each word in a sentence, and then the entire sentence. I built this to confirm that sentence embeddings actually do what I think they are doing.</p>
-<div id="cell-10" class="cell" data-execution_count="54">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> concept_string_sim(concept, </span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                       text</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>):</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    concept_emedding <span class="op">=</span> model.encode(concept)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> word <span class="kw">in</span> text.split():</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>        word_embedding <span class="op">=</span> model.encode(word)</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>        similarity <span class="op">=</span> util.pytorch_cos_sim(concept_emedding, word_embedding)[<span class="dv">0</span>][<span class="dv">0</span>]</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f'Similarity between </span><span class="sc">{</span>word<span class="sc">}</span><span class="ss"> and </span><span class="sc">{</span>concept<span class="sc">}</span><span class="ss"> is </span><span class="sc">{</span>similarity<span class="sc">:.2f}</span><span class="ss">.'</span>)</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    text_embedding <span class="op">=</span> model.encode(text)</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    similarity <span class="op">=</span> util.pytorch_cos_sim(concept_emedding, text_embedding)[<span class="dv">0</span>][<span class="dv">0</span>]</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Similarity between </span><span class="sc">{</span>text<span class="sc">}</span><span class="ss"> and </span><span class="sc">{</span>concept<span class="sc">}</span><span class="ss"> is </span><span class="sc">{</span>similarity<span class="sc">:.2f}</span><span class="ss">.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="cell-11" class="cell" data-execution_count="55">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>concept_string_sim(<span class="st">'rock, music'</span>, <span class="st">'Grateful Dead show'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Similarity between Grateful and rock, music is 0.18.
-Similarity between Dead and rock, music is 0.37.
-Similarity between show and rock, music is 0.28.
-Similarity between Grateful Dead show and rock, music is 0.36.</code></pre>
-</div>
-</div>
-<div id="cell-12" class="cell" data-execution_count="56">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>concept_string_sim(<span class="st">'thankful attitude'</span>, <span class="st">'Grateful Dead show'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Similarity between Grateful and thankful attitude is 0.50.
-Similarity between Dead and thankful attitude is 0.23.
-Similarity between show and thankful attitude is 0.20.
-Similarity between Grateful Dead show and thankful attitude is 0.20.</code></pre>
-</div>
-</div>
-<p>In the first example, the concept “rock, music” shows varying degrees of similarity with each word in the sentence “Grateful Dead show,” with the highest similarity observed with the word “Dead” (0.37), suggesting that the model captures the association between the band “Grateful Dead” and rock music. The overall sentence similarity score (0.36) closely aligns with the highest word similarity score, indicating that sentence embeddings can indeed capture the essence of the concept in relation to the full sentence context.</p>
-<p>In the second case, the concept “thankful attitude” has the highest similarity with the word “Grateful” (0.50), which is intuitive given the semantic closeness of “thankful” and “Grateful.” However, the overall similarity between the entire sentence “Grateful Dead show” and the concept “thankful attitude” is lower (0.20), suggesting that while individual words like “Grateful” strongly resonate with the concept, the context provided by the entire sentence shifts the meaning away from the concept’s core, demonstrating how sentence embeddings can differentiate between the significance of individual words and the collective meaning of a sentence.</p>
-<p>No measuring some sentence similarities.</p>
-<div id="cell-15" class="cell" data-execution_count="57">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> string_string_sim(text1,</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>                      text2,</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>):</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    text1_embedding <span class="op">=</span> model.encode(text1)</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    text2_embedding <span class="op">=</span> model.encode(text2)</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    similarity <span class="op">=</span> util.pytorch_cos_sim(text1_embedding, text2_embedding)[<span class="dv">0</span>][<span class="dv">0</span>]</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Similarity is </span><span class="sc">{</span>similarity<span class="sc">:.2f}</span><span class="ss">.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="cell-16" class="cell" data-execution_count="58">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(<span class="st">'We study revolutions.'</span>, <span class="st">'This paper examines social movements.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Similarity is 0.47.</code></pre>
-</div>
-</div>
-<div id="cell-17" class="cell" data-execution_count="59">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(<span class="st">'We study revolutions.'</span>, <span class="st">'This paper examines health behaviors.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Similarity is 0.18.</code></pre>
-</div>
-</div>
-<div id="cell-18" class="cell" data-execution_count="60">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(<span class="st">'We study revolutions.'</span>, <span class="st">'This paper examines social movements in Algeria during the 1970s.'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Similarity is 0.36.</code></pre>
-</div>
-</div>
-<p>This also worked. Note, however, that the last example had a lower correlation with “We study revolutions.” This is because the the additional information in the sentence, like the country and time, were uncorrelated with the shorter, first sentence. I suspect this means that, on average, longer texts will have a lower correlation with a short, conceptual phrase than shorter texts simply because they are more likely to include different types of information.</p>
-<p>On to measuring a concept. In this case, I’m interested in to what degree a sociological research article’s abstract is about measuring social movements and protest.</p>
-<div id="cell-21" class="cell" data-execution_count="61">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>movement_word_list<span class="op">=</span>[<span class="st">'social movement'</span>, <span class="st">'contentious politics'</span>, <span class="st">'mobilization'</span>,]</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>movement_words <span class="op">=</span> <span class="st">', '</span>.join(movement_word_list)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="cell-22" class="cell" data-execution_count="62">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(movement_words,</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>                      <span class="st">'We study revolutions.'</span>,</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Similarity is 0.44.</code></pre>
-</div>
-</div>
-<div id="cell-23" class="cell" data-execution_count="63">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(movement_words,</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>                      <span class="st">'This paper examines health behaviors.'</span>,</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Similarity is 0.18.</code></pre>
-</div>
-</div>
-<div id="cell-24" class="cell" data-execution_count="64">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>string_string_sim(movement_words,</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>                      <span class="st">'We study revolutions in Algeria.'</span>,</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Similarity is 0.42.</code></pre>
-</div>
-</div>
-<p>Great. Now an <a href="https://meridian.allenpress.com/mobilization/article-abstract/28/4/491/498084/UNDOING-VIOLENCE-IN-THE-MANOSPHERE-INCELS?redirectedFrom=fulltext">example</a> from something publishing in <a href="http://mobilizationjournal.org">Mobilization</a>.</p>
-<div id="cell-26" class="cell" data-execution_count="84">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>abstract_sf <span class="op">=</span> (</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"All around the world, school-entry cohorts are organized on an annual "</span></span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"calendar so that the age of students in the same cohort differs by up to "</span></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"one year. It is a well-established finding that this age gap entails a "</span></span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"consequential (dis)advantage for academic performance referred to as the "</span></span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"relative age effect (RAE). This study contributes to a recent strand of "</span></span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"research that has turned to investigate the RAE on non-academic outcomes "</span></span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"such as personality traits. An experimental setup is used to estimate the "</span></span>
-<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"causal effect of monthly age on cognitive effort in a sample of 798 "</span></span>
-<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"fifth-grade students enrolled in the Spanish educational system, "</span></span>
-<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"characterized by strict enrolment rules. Participants performed three "</span></span>
-<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"different real-effort tasks under three different incentive conditions: no "</span></span>
-<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"rewards; material rewards; and material and status rewards. We observe "</span></span>
-<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"that older students outwork their youngest peers by two-fifths of a "</span></span>
-<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"standard deviation, but only when material rewards for performance are in "</span></span>
-<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"place. Despite the previously reported higher taste for competition among "</span></span>
-<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"the older students within a school-entry cohort, we do not find that the "</span></span>
-<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RAE on cognitive effort increases after inducing competition for peer "</span></span>
-<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"recognition. Finally, the study also provides suggestive evidence of a "</span></span>
-<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"larger RAE among boys and students from lower social strata. Implications "</span></span>
-<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"for sociological research on educational inequality are discussed. To "</span></span>
-<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"conclude, we outline policy recommendations such as implementing "</span></span>
-<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"evaluation tools that nudge teachers toward being mindful of relative age "</span></span>
-<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"differences."</span></span>
-<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-27"><a href="#cb29-27" aria-hidden="true" tabindex="-1"></a>string_string_sim(abstract_moby, movement_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Similarity is 0.36.</code></pre>
-</div>
-</div>
-<p>An a non-movements <a href="https://academic.oup.com/sf/advance-article-abstract/doi/10.1093/sf/soae023/7612022">article from Social Forces</a>.</p>
-<div id="cell-28" class="cell" data-execution_count="66">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>abstract_sf <span class="op">=</span> (</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"All around the world, school-entry cohorts are organized on an annual "</span></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"calendar so that the age of students in the same cohort differs by up to "</span></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"one year. It is a well-established finding that this age gap entails a "</span></span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"consequential (dis)advantage for academic performance referred to as the "</span></span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"relative age effect (RAE). This study contributes to a recent strand of "</span></span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"research that has turned to investigate the RAE on non-academic outcomes "</span></span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"such as personality traits. An experimental setup is used to estimate the "</span></span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"causal effect of monthly age on cognitive effort in a sample of 798 "</span></span>
-<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"fifth-grade students enrolled in the Spanish educational system, "</span></span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"characterized by strict enrolment rules. Participants performed three "</span></span>
-<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"different real-effort tasks under three different incentive conditions: no "</span></span>
-<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"rewards; material rewards; and material and status rewards. We observe "</span></span>
-<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"that older students outwork their youngest peers by two-fifths of a "</span></span>
-<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"standard deviation, but only when material rewards for performance are in "</span></span>
-<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"place. Despite the previously reported higher taste for competition among "</span></span>
-<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"the older students within a school-entry cohort, we do not find that the "</span></span>
-<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RAE on cognitive effort increases after inducing competition for peer "</span></span>
-<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"recognition. Finally, the study also provides suggestive evidence of a "</span></span>
-<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"larger RAE among boys and students from lower social strata. Implications "</span></span>
-<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"for sociological research on educational inequality are discussed. To "</span></span>
-<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"conclude, we outline policy recommendations such as implementing "</span></span>
-<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"evaluation tools that nudge teachers toward being mindful of relative age "</span></span>
-<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"differences."</span></span>
-<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>string_string_sim(abstract_sf, movement_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Similarity is -0.04.</code></pre>
-</div>
-</div>
-<p>Great. Results are plausible. Now I’m going to try it out an entire dataset of 10K recent sociology articles.</p>
-<div id="cell-30" class="cell" data-execution_count="67">
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_json(<span class="st">'https://raw.githubusercontent.com/nealcaren/notes/main/posts/abstracts/sociology-abstracts.json'</span>)</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="bu">len</span>(df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-5" class="cell" data-execution_count="67">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_json(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"https://raw.githubusercontent.com/nealcaren/notes/main/posts/abstracts/sociology-abstracts.json"</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">len</span>(df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="67">
 <pre><code>9797</code></pre>
 </div>
 </div>
-<p>I revised the function so that it takes a word embedding, rather than a word for one of the inputs. This way, it only calculates the movement words embedding once, rather than once for each of the 10,000 comparisons. It also outputs just the numeric value of the correlation, rather than a phrase.</p>
-<div id="cell-32" class="cell" data-execution_count="68">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>movement_word_embedding <span class="op">=</span> model.encode(movement_words)</span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> string_embedding_sim(text1,</span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>                      text2_embedding<span class="op">=</span>movement_word_embedding,</span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>):</span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    text1_embedding <span class="op">=</span> model.encode(text1)</span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    similarity <span class="op">=</span> util.pytorch_cos_sim(text1_embedding, text2_embedding)[<span class="dv">0</span>][<span class="dv">0</span>].item()</span>
-<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> similarity</span>
-<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a><span class="co"># check that it works</span></span>
-<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>string_embedding_sim(abstract_moby )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="68">
-<pre><code>0.36133891344070435</code></pre>
+<p>I knew that I would want to compute the embeddings for the abstract corpus just once, and then save the results in a feature in the dataframe, since this steps takes a couple of minutes.</p>
+<div id="cell-7" class="cell" data-execution_count="68">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_tensors(text):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model.encode(text, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"abstract_encodings"</span>] <span class="op">=</span> df[<span class="st">"Abstract"</span>].<span class="bu">apply</span>(make_tensors)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>I asked ChatGPT to write me a function that would take a text and find the most similar text from a corpus, with the option to add or remove specific concepts, using sentence transformers. After some back and forth, here’s what it gave me.</p>
+<div id="cell-9" class="cell" data-execution_count="69">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> transform_and_match_df(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    text, <span class="op">*</span>, remove_concept<span class="op">=</span><span class="va">None</span>, add_concept<span class="op">=</span><span class="va">None</span>, df, feature_name, n<span class="op">=</span><span class="dv">5</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">    Transforms the text by optionally removing one concept and adding another, then finds the n nearest matches from a DataFrame.</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">    Parameters:</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">    - text (str): The base text for transformation.</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">    - remove_concept (str, optional): The concept to remove from the base text.</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">    - add_concept (str, optional): The concept to add to the transformed text.</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">    - df (pandas.DataFrame): A DataFrame containing pre-computed embeddings.</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">    - feature_name (str): The name of the DataFrame column containing the embeddings.</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">    - n (int): The number of nearest neighbors to return.</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">    - pandas.DataFrame: A DataFrame of the n nearest matches.</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Initialize the model</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> SentenceTransformer(<span class="st">"all-MiniLM-L6-v2"</span>)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Generate embedding for the text</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    text_embedding <span class="op">=</span> model.encode(text, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Initialize transformed_embedding with text_embedding</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    transformed_embedding <span class="op">=</span> text_embedding.clone()</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># If remove_concept is specified, subtract its embedding</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> remove_concept <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>        remove_embedding <span class="op">=</span> model.encode(remove_concept, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>        transformed_embedding <span class="op">-=</span> remove_embedding</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>    <span class="co"># If add_concept is specified, add its embedding</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> add_concept <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>        add_embedding <span class="op">=</span> model.encode(add_concept, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>        transformed_embedding <span class="op">+=</span> add_embedding</span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Convert DataFrame embeddings column from list to tensor</span></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>    df_embeddings <span class="op">=</span> torch.stack([torch.tensor(e) <span class="cf">for</span> e <span class="kw">in</span> df[feature_name].values])</span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Compute cosine similarities</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>    similarities <span class="op">=</span> util.cos_sim(transformed_embedding, df_embeddings).cpu()</span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Find the indices of the top n similarity scores</span></span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>    nearest_match_indices <span class="op">=</span> similarities.squeeze(<span class="dv">0</span>).topk(n).indices</span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Return the nearest matching rows from the DataFrame</span></span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df.iloc[nearest_match_indices.tolist()]</span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a><span class="co"># This enforces named arguments for everything except 'text'</span></span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a><span class="co"># Example usage:</span></span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a><span class="co"># nearest_matches = transform_and_match_df(text="Your text here", df=your_dataframe, feature_name="your_embedding_column_name", n=3)</span></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a><span class="co"># print("Nearest matches:", nearest_matches)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Applying the function, which uses the smallest model, to my dataframe of 10,000 cases takes about 4 minutes on my MacBook Air with an M2 processor. In contrast, it takes only seconds running in an environment with a GPU, such as Google Colab. Also, you would ideally want to store the article embeddings somewhere rather than discarding them, as the encoding phase of the function is the computationally-intense part.</p>
-<div id="cell-34" class="cell" data-execution_count="69">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_movement_similarity'</span>] <span class="op">=</span> df[<span class="st">'Abstract'</span>].<span class="bu">apply</span>(string_embedding_sim)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Plot the results. Looks pretty normal but with a little right skew, which are presumably the articles that focus on movements.</p>
-<div id="cell-36" class="cell" data-execution_count="70">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_movement_similarity'</span>].hist(bins<span class="op">=</span><span class="dv">20</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="sentence-embeddings-ii_files/figure-html/cell-23-output-1.png" class="img-fluid figure-img"></p>
-</figure>
-</div>
-</div>
-</div>
-<p>Next, look at a sample of articles with different similarity scores, sorted by highest to lowest. The measure has some face validity, as the movementness of the articles declines across the clusters.</p>
-<div id="cell-38" class="cell" data-execution_count="71">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1: Create quintiles</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'Quintile'</span>] <span class="op">=</span> pd.qcut(df[<span class="st">'abstract_movement_similarity'</span>], <span class="dv">20</span>, labels<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 2: Filter for the top quarter quintiles (quintiles 15-19)</span></span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>top_half_quintiles <span class="op">=</span> df[df[<span class="st">'Quintile'</span>] <span class="op">&gt;=</span> <span class="dv">15</span>]</span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 3: Display "Title" and "Source title" for a random sample of 5 rows within each top half quintile</span></span>
-<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> quintile <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">19</span>, <span class="dv">14</span>, <span class="op">-</span><span class="dv">1</span>):</span>
-<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>    sample <span class="op">=</span> top_half_quintiles[top_half_quintiles[<span class="st">'Quintile'</span>] <span class="op">==</span> quintile].sample(n<span class="op">=</span><span class="dv">5</span>)</span>
-<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Quintile </span><span class="sc">{</span>quintile <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">:"</span>)</span>
-<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>    display(sample[[<span class="st">'Source title'</span>, <span class="st">'Title'</span>, <span class="st">'abstract_movement_similarity'</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Quintile 20:
-Quintile 19:
-Quintile 18:
-Quintile 17:
-Quintile 16:</code></pre>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">Source title</th>
-<th data-quarto-table-cell-role="th">Title</th>
-<th data-quarto-table-cell-role="th">abstract_movement_similarity</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">4666</td>
-<td>Sociological Forum</td>
-<td>Going Green: Environmental Protest, Policy, and CO2 Emissions in U.S. States, 1990–2007</td>
-<td>0.439596</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">3386</td>
-<td>Social Currents</td>
-<td>Tactics and targets: Explaining shifts in grassroots environmental resistance</td>
-<td>0.476411</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">4199</td>
-<td>Mobilization</td>
-<td>Movement-countermovement dynamics and mobilizing the electorate</td>
-<td>0.524236</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">1474</td>
-<td>Sociological Forum</td>
-<td>Be Careful What You Wish For: The Ironic Connection Between the Civil Rights Struggle and Today's Divided America</td>
-<td>0.596116</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">8583</td>
-<td>Sociological Inquiry</td>
-<td>The Cultural and the Racial: Stitching Together the Sociology of Race and Ethnicity and the Sociology of Culture</td>
-<td>0.429177</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-<div class="cell-output cell-output-display">
+<p>First test. Swap out a qualitative method for a experiments.</p>
+<div id="cell-11" class="cell" data-execution_count="70">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> transform_and_match_df(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    text<span class="op">=</span><span class="st">"We use interviews to analyze racial inequalities."</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    remove_concept<span class="op">=</span><span class="st">"qualitative"</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    add_concept <span class="op">=</span> <span class="st">"experiments"</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span> df,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    feature_name <span class="op">=</span> <span class="st">"abstract_encodings"</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>r[[<span class="st">"Abstract"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="70">
 <div>
 
 
@@ -615,48 +306,72 @@ Quintile 16:</code></pre>
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">Source title</th>
-<th data-quarto-table-cell-role="th">Title</th>
-<th data-quarto-table-cell-role="th">abstract_movement_similarity</th>
+<th data-quarto-table-cell-role="th">Abstract</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">7252</td>
-<td>Qualitative Sociology</td>
-<td>The Social Life of the State: Relational Ethnography and Political Sociology</td>
-<td>0.366393</td>
+<td data-quarto-table-cell-role="th">8904</td>
+<td>Field experiments have proliferated throughout the social sciences and have become a mainstay for identifying racial discrimination during the hiring process. To date, field experiments of labor market discrimination have generally drawn their sample of job postings from limited sources, often from a single major online job posting website. While providing a large pool of job postings across labor markets, this narrow sampling procedure leaves open questions about the generalizability of the findings from field experiments of racial discrimination in the extant literature. In this paper, w...</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">5255</td>
-<td>Du Bois Review</td>
-<td>Rethinking models of minority political participation: Inter-and intra-group variation in political "styles"</td>
-<td>0.394801</td>
+<td data-quarto-table-cell-role="th">6162</td>
+<td>Field experiments using fictitious applications have become an increasingly important method for assessing hiring discrimination. Most field experiments of hiring, however, only observe whether the applicant receives an invitation to interview, called the “callback.” How adequate is our understanding of discrimination in the hiring process based on an assessment of discrimination in callbacks, when the ultimate subject of interest is discrimination in job offers? To address this question, we examine evidence from all available field experimental studies of racial or ethnic discrimination i...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">5346</td>
-<td>Social Forces</td>
-<td>The Persuasive Power of Protest. How Protest wins Public Support</td>
-<td>0.363187</td>
+<td data-quarto-table-cell-role="th">9168</td>
+<td>Previous research has established that people shift their identities situationally and may come to subconsciously mirror one another. We explore this phenomenon among survey interviewers in the 2004-2018 General Social Survey by drawing on repeated measures of racial identification collected after each interview. We find not only that interviewers self-identify differently over time but also that their response changes cannot be fully explained by several measurement-error related expectations, either random or systematic. Rather, interviewers are significantly more likely to identify thei...</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">1640</td>
-<td>Social Psychology Quarterly</td>
-<td>Samuel Stouffer and Relative Deprivation</td>
-<td>0.362094</td>
+<td data-quarto-table-cell-role="th">9049</td>
+<td>How do the demographic contexts of urban labor markets correlate with the extent to which racial and ethnic minorities are disadvantaged at the hiring stage? This paper builds on two branches of labor market stratification literature to link demographic contexts of labor markets to race- and ethnicity-based hiring discrimination that manifest within them. Relying on a unique large-scale field experiment that involved submitting nearly 12,000 fictitious resumes to real job postings across 50 major urban areas, I found that Black population size is associated with greater discrimination agai...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">8030</td>
-<td>Sociological Forum</td>
-<td>Broker Wisdom: How Migrants Navigate a Broker-Centric Migration System in Vietnam1,2</td>
-<td>0.403658</td>
+<td data-quarto-table-cell-role="th">4843</td>
+<td>How do white observers react when people with black heritage assert a biracial, multiracial, or white identity rather than a black identity? To address this question, I conducted two experiments in which participants evaluated a darker-skinned or a lighter-skinned job applicant who presented his identity as either black, biracial, multiracial, or white. The results show that identity assertions influenced how white observers categorized applicants but not how they evaluated applicants. Most white observers accepted the identity of both the lighter-skinned and darker-skinned applicant when ...</td>
 </tr>
 </tbody>
 </table>
 
 </div>
 </div>
-<div class="cell-output cell-output-display">
+</div>
+<p>Took about eight seconds on my MacBook Air (M2). Results seem encouraging.</p>
+<p>How about an actual abstract?</p>
+<div id="cell-13" class="cell" data-execution_count="71">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>abstract <span class="op">=</span> <span class="st">"""Black men and women have different levels of average educational attainment, yet</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="st">few studies have focused on explaining how and why these patterns develop. One</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="st">explanation may be inequality in experiences with institutional punishment</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="st">through exclusionary school discipline and criminal justice exposure. Drawing on</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="st">intersectional frameworks and theories of social control, I examine the long-</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="st">term association between punishment and the Black gender gap using data from the</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="st">Children of the National Longitudinal Survey of Youth 1979 cohort (NLSY-C).</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="st">Decomposition analyses reveal that about one third of the gender gap can be</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="st">explained by gender differences in experiences with institutional punishments,</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="st">net of differences in observed behaviors. These measures are predictive at key</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="st">educational transition points, including finishing high school and earning a</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="st">4-year college degree. Though Black boys and girls have similar family</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="st">backgrounds and grow up in similar neighborhoods, results suggest that Black</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="st">girls have a persistent advantage in educational attainment due in part to their</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="st">lower levels of exposure to exclusionary school discipline and the criminal</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="st">justice system. In addition, I find that gender differences in early</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="st">achievement, early externalizing behavioral problems, school experiences, and</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="st">substance use in adolescence and early adulthood are associated with gender</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="st">differences in educational attainment. Taken together, these results illustrate</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="st">the importance of punishment disparities in understanding disparate educational</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="st">outcomes over the life course of Black men and women."""</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>First, try to get the most similar article that doesn’t is explicitly about racial discrimination.</p>
+<div id="cell-15" class="cell" data-execution_count="78">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> transform_and_match_df(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    text<span class="op">=</span>abstract,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    remove_concept<span class="op">=</span><span class="st">"racial discrimination, African American, Black"</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span> df,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    feature_name <span class="op">=</span> <span class="st">"abstract_encodings"</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>r[[<span class="st">"Abstract"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="78">
 <div>
 
 
@@ -664,48 +379,49 @@ Quintile 16:</code></pre>
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">Source title</th>
-<th data-quarto-table-cell-role="th">Title</th>
-<th data-quarto-table-cell-role="th">abstract_movement_similarity</th>
+<th data-quarto-table-cell-role="th">Abstract</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">3620</td>
-<td>Mobilization</td>
-<td>Loud and clear: The effect of protest signals on congressional attention</td>
-<td>0.335533</td>
+<td data-quarto-table-cell-role="th">4711</td>
+<td>Although prior research links parental incarceration to deleterious outcomes for children during the life course, few studies have examined whether such incarceration affects the social exclusion of children during adolescence. Drawing on several lines of scholarship, the authors examined whether adolescents with incarcerated parents have fewer or lower quality relationships, participate in more antisocial peer networks, and feel less integrated or engaged in school. The study applies propensity score matching to survey and network data from a national sample of youth. Analyses indicated t...</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">4417</td>
-<td>Gender and Society</td>
-<td>“Manning Up” to be a Good Father: Hybrid Fatherhood, Masculinity, and U.S. Responsible Fatherhood Policy</td>
-<td>0.315162</td>
+<td data-quarto-table-cell-role="th">2378</td>
+<td>Why do men in the United States today complete less schooling than women? One reason may be gender differences in early self-regulation and prosocial behaviors. Scholars have found that boys’ early behavioral disadvantage predicts their lower average academic achievement during elementary school. In this study, I examine longer-term effects: Do these early behavioral differences predict boys’ lower rates of high school graduation, college enrollment and graduation, and fewer years of schooling completed in adulthood? If so, through what pathways are they linked? I leverage a nationally rep...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">9603</td>
-<td>City and Community</td>
-<td>Community Social Capital, Racial Diversity, and Philanthropic Resource Mobilization in the Time of a Pandemic</td>
-<td>0.330078</td>
+<td data-quarto-table-cell-role="th">9104</td>
+<td>Objective: The goal of this study is to examine the association between parental incarceration and parent–youth closeness. Background: Despite the established complex repercussions of incarceration for relationships between adults, and the well-known intergenerational consequences of parental incarceration, little is known about how incarceration structures intergenerational relationships between parents and children. Methods: In this article, I use data from the Future of Families and Child Wellbeing Study (N = 3408), a cohort of children followed over a 15-year period, to examine how par...</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">2222</td>
-<td>Sociological Perspectives</td>
-<td>Cultural Capital, Motherhood Capital, and Low-income Immigrant Mothers' Institutional Negotiations</td>
-<td>0.339970</td>
+<td data-quarto-table-cell-role="th">4611</td>
+<td>In the present study, we examine the relationship between involvement in the criminal justice system and achieved socioeconomic status (SES), as well as the moderating effect of ascribed SES. Using data from the National Longitudinal Study of Adolescent to Adult Health, we find a nonlinear relationship between criminal justice involvement and achieved SES, such that deeper involvement leads to increasingly negative consequences on achieved SES. Furthermore, those coming from the highest socioeconomic backgrounds are not "protected"from the deleterious consequences of system involvement, bu...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">6999</td>
-<td>Social Forces</td>
-<td>Emigration and Electoral Outcomes in Mexico: Democratic Diffusion, Clientelism, and Disengagement</td>
-<td>0.326051</td>
+<td data-quarto-table-cell-role="th">5538</td>
+<td>Research has documented a negative association between women’s educational attainment and early sexual intercourse, union formation, and pregnancy. However, the implications that school progression relative to age may have for the timing and order of such transitions are poorly understood. In this article, I argue that educational attainment has different implications depending on a student’s progression through school grades relative to her age. Using month of birth and age-at-school-entry policies to estimate the effect of advanced school progression by age, I show that it accelerates th...</td>
 </tr>
 </tbody>
 </table>
 
 </div>
 </div>
-<div class="cell-output cell-output-display">
+</div>
+<p>Pretty good, although maybe skewing a bit too much towards parental incarceration.</p>
+<p>What about articles on the same topic focusing on Latino/Latinas?</p>
+<div id="cell-17" class="cell" data-execution_count="79">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> transform_and_match_df(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    text<span class="op">=</span>abstract,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    remove_concept<span class="op">=</span><span class="st">"African American, Black"</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    add_concept <span class="op">=</span> <span class="st">"Latino, Latina, Hispanic"</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span> df,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    feature_name <span class="op">=</span> <span class="st">"abstract_encodings"</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>r[[<span class="st">"Abstract"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="79">
 <div>
 
 
@@ -713,48 +429,48 @@ Quintile 16:</code></pre>
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">Source title</th>
-<th data-quarto-table-cell-role="th">Title</th>
-<th data-quarto-table-cell-role="th">abstract_movement_similarity</th>
+<th data-quarto-table-cell-role="th">Abstract</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">881</td>
-<td>Sociological Forum</td>
-<td>Changing Childrearing Beliefs Among Indigenous Rural-to-Urban Migrants in El Alto, Bolivia</td>
-<td>0.291009</td>
+<td data-quarto-table-cell-role="th">2513</td>
+<td>The socializing power of the prison is routinely discussed as a prisonization process in which inmates learn to conform to life in the correctional facility. However, the impact that identities socialized in the prison may have outside of the institution itself remains an under-researched aspect of mass incarceration's collateral consequences. In this article I use ethnographic data collected over fifteen months in two juvenile justice facilities and interviews with twenty-four probation youth to examine how the identities socialized among Latino prison inmates spill over into high-incarce...</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">3873</td>
-<td>American Journal of Sociology</td>
-<td>Interlock globally, act domestically: Corporate political unity in the 21st century</td>
-<td>0.289036</td>
+<td data-quarto-table-cell-role="th">4732</td>
+<td>Using a nationally representative sample of approximately 3,500 public schools, this study builds on and extends our knowledge of how ‘‘minority threat’’ manifests within schools. We test whether various disciplinary policies and practices are mobilized in accordance with Latino/a student composition, presumably the result of a group response to perceptions that white racial dominance is jeopardized. We gauge how schools’ Latino/a student populations are associated with the availability and use of several specific types of discipline. We further explore possible moderating influences of sc...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">2762</td>
-<td>Social Problems</td>
-<td>Moral panic, moral breach: Bernhard goetz, george zimmerman, and racialized news reporting in contested cases of self-defense</td>
-<td>0.302752</td>
+<td data-quarto-table-cell-role="th">5818</td>
+<td>We advance current knowledge of school punishment by examining (1) the prevalence of exclusionary discipline in elementary school, (2) racial disparities in exclusionary discipline in elementary school, and (3) the association between exclusionary discipline and aggressive behavior in elementary school. Using child and parent reports from the Fragile Families Study, we estimate that more than one in ten children born between 1998 and 2000 in large US cities were suspended or expelled by age nine, when most were in third grade. We also find extreme racial disparity; about 40 percent of non-...</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">501</td>
-<td>Du Bois Review</td>
-<td>Race, justice, and desegregation</td>
-<td>0.290871</td>
+<td data-quarto-table-cell-role="th">9509</td>
+<td>Recent work has begun to investigate how criminalization is mediated through interpersonal relationships. While this research emphasizes the importance of gender dynamics and cross-gender intimate relations for boys and men of color, little is known about how gendered and sexualized relationships matter for criminalized women and girls of color. This study seeks to fill this knowledge gap and asks: How do system-involved Chicanas’ relationships with men and boys shape their experiences of criminalization over the life course? How do they navigate criminalization through men and boys? While...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">105</td>
-<td>Symbolic Interaction</td>
-<td>Chicago, jazz and marijuana: Howard Becker on Outsiders</td>
-<td>0.308609</td>
+<td data-quarto-table-cell-role="th">556</td>
+<td>Opportunities for upward mobility have been declining in the United States in recent decades. Within this context, I examine the mobility trajectories of a contemporary cohort of 1.5-, second-, and third-plus-generation Latino youth. Drawing on survey data from California that accounts for the precarious legal status of many 1.5 generation immigrants, I find that Latino youths' patterns of postsecondary enrollment and employment do not differ by generation since migration. Additionally, I do not find evidence of racial/ethnic barriers to Latino youths' enrollment in less selective colleges...</td>
 </tr>
 </tbody>
 </table>
 
 </div>
 </div>
-<div class="cell-output cell-output-display">
+</div>
+<p>Seems solid.</p>
+<p>What about dialing up gender and women’s experiences?</p>
+<div id="cell-19" class="cell" data-execution_count="80">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> transform_and_match_df(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    text<span class="op">=</span>abstract,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    add_concept <span class="op">=</span> <span class="st">"gender, female, women"</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span> df,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    feature_name <span class="op">=</span> <span class="st">"abstract_encodings"</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>r[[<span class="st">"Abstract"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="80">
 <div>
 
 
@@ -762,41 +478,29 @@ Quintile 16:</code></pre>
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">Source title</th>
-<th data-quarto-table-cell-role="th">Title</th>
-<th data-quarto-table-cell-role="th">abstract_movement_similarity</th>
+<th data-quarto-table-cell-role="th">Abstract</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">1024</td>
-<td>Social Problems</td>
-<td>Chilling Effects: Diminished Political Participation among Partners of Formerly Incarcerated Men</td>
-<td>0.267233</td>
+<td data-quarto-table-cell-role="th">3590</td>
+<td>School disciplinary processes are an important mechanism of inequality in education. Most prior research in this area focuses on the significantly higher rates of punishment among African American boys, but in this article, we turn our attention to the discipline of African American girls. Using advanced multilevel models and a longitudinal data set of detailed school discipline records, we analyze interactions between race and gender on office referrals. The results show troubling and significant disparities in the punishment of African American girls. Controlling for background variables...</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">7057</td>
-<td>Gender and Society</td>
-<td>The Gender Mobility Paradox: Gender Segregation and Women’s Mobility Across Gender-Type Boundaries, 1970–2018</td>
-<td>0.263790</td>
+<td data-quarto-table-cell-role="th">6741</td>
+<td>In this research, I use theories of framing and social construction to investigate how race and gender are featured in national news coverage of the school-to-prison pipeline, and how policies and practices funnel students from school to the criminal justice system. Results indicate that there are three primary narratives surrounding the school-to-prison pipeline. The first is a narrative that harsh disciplinary practices in schools are irrational and negatively impact all students. The second narrative crafts the school-to-prison pipeline as a social problem for all Black students irrespe...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">7265</td>
-<td>Social Forces</td>
-<td>The Limits of Gaining Rights while Remaining Marginalized: The Deferred Action for Childhood Arrivals (DACA) Program and the Psychological Wellbeing of Latina/o Undocumented Youth</td>
-<td>0.267221</td>
+<td data-quarto-table-cell-role="th">6720</td>
+<td>We examine change across U.S. cohorts born between 1920 and 2000 in their probability of having had sex with same-sex partners in the last year and since age 18. Using data from the 1988–2018 General Social Surveys, we explore how trends differ by gender, race, and class background. We find steep increases across birth cohorts in the proportion of women who have had sex with both men and women since age 18, whereas increases for men are less steep. We suggest that the trends reflect an increasingly accepting social climate, and that women’s steeper trend is rooted in a long-term asymmetry ...</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">873</td>
-<td>Social Currents</td>
-<td>Rethinking organizational decoupling: Fields, power struggles, and work routines</td>
-<td>0.267197</td>
+<td data-quarto-table-cell-role="th">7229</td>
+<td>Intersectionality scholars have long identified dynamic configurations of race and gender ideologies. Yet, survey research on racial and gender attitudes tends to treat these components as independent. We apply latent class analysis to a set of racial and gender attitude items from the General Social Survey (1977 to 2018) to identify four configurations of individuals’ simultaneous views on race and gender. Two of these configurations hold unified progressive or regressive racial and gender attitudes. The other two formations have discordant racial and gender attitudes, where progressive v...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">6205</td>
-<td>Symbolic Interaction</td>
-<td>Digitalization as “an Agent of Social Change” in a Supermarket Chain: Applying Blumer's Theory of Industrialization in Contemporary Society</td>
-<td>0.271341</td>
+<td data-quarto-table-cell-role="th">5067</td>
+<td>This study is the first to use nationally representative data to examine whether differences in gender-typical behaviors among adolescents are associated with high school academic performance and whether such associations vary by race or socioeconomic status. Using wave I data from the National Longitudinal Study of Adolescent Health and linked academic transcript data from the Adolescent Health and Academic Achievement study, we find that boys who report moderate levels of gender atypicality earn the highest grade point averages (GPAs), but few boys score in this range. As gender typicali...</td>
 </tr>
 </tbody>
 </table>
@@ -804,27 +508,18 @@ Quintile 16:</code></pre>
 </div>
 </div>
 </div>
-<p>Another check. Which journals publish the most movement research?</p>
-<div id="cell-40" class="cell" data-execution_count="72">
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>df.groupby(<span class="st">'Source title'</span>)[<span class="st">'abstract_movement_similarity'</span>].mean().sort_values(ascending<span class="op">=</span><span class="va">True</span>).plot(kind<span class="op">=</span><span class="st">'barh'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="sentence-embeddings-ii_files/figure-html/cell-25-output-1.png" class="img-fluid figure-img"></p>
-</figure>
-</div>
-</div>
-</div>
-<p>And what’s the most movementy article in each journal?</p>
-<div id="cell-42" class="cell" data-execution_count="73">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Group by 'Source Title' and find the index of the max 'abstract_movement_similarity' in each group</span></span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>idx <span class="op">=</span> df.groupby(<span class="st">'Source title'</span>)[<span class="st">'abstract_movement_similarity'</span>].idxmax()</span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter the DataFrame to keep only the rows with the highest 'abstract_movement_similarity' in each group</span></span>
-<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>highest_values_df <span class="op">=</span> df.loc[idx]</span>
-<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>display <span class="op">=</span> [<span class="st">'Source title'</span>, <span class="st">'Title'</span>, <span class="st">'abstract_movement_similarity'</span>]</span>
-<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>highest_values_df[display].sort_values(by<span class="op">=</span><span class="st">'abstract_movement_similarity'</span>, ascending<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="73">
+<p>Seems good, but we seem to have drifted more towards punishiment than education, which is, I think a function of how the abstract was written. What if dial up the education?</p>
+<div id="cell-23" class="cell" data-execution_count="77">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> transform_and_match_df(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    text<span class="op">=</span>abstract,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    remove_concept<span class="op">=</span><span class="st">"survey, regression, statistical analysis"</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    add_concept <span class="op">=</span> <span class="st">"education, in-depth interviews, participant observation"</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span> df,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    feature_name <span class="op">=</span> <span class="st">"abstract_encodings"</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>r[[<span class="st">"Abstract"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="77">
 <div>
 
 
@@ -832,179 +527,29 @@ Quintile 16:</code></pre>
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">Source title</th>
-<th data-quarto-table-cell-role="th">Title</th>
-<th data-quarto-table-cell-role="th">abstract_movement_similarity</th>
+<th data-quarto-table-cell-role="th">Abstract</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">1923</td>
-<td>Mobilization</td>
-<td>Social movements in an age of participation</td>
-<td>0.702846</td>
+<td data-quarto-table-cell-role="th">6741</td>
+<td>In this research, I use theories of framing and social construction to investigate how race and gender are featured in national news coverage of the school-to-prison pipeline, and how policies and practices funnel students from school to the criminal justice system. Results indicate that there are three primary narratives surrounding the school-to-prison pipeline. The first is a narrative that harsh disciplinary practices in schools are irrational and negatively impact all students. The second narrative crafts the school-to-prison pipeline as a social problem for all Black students irrespe...</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">433</td>
-<td>American Journal of Sociology</td>
-<td>Issue bricolage: Explaining the configuration of the social movement sector, 1960–1995</td>
-<td>0.680012</td>
+<td data-quarto-table-cell-role="th">279</td>
+<td>Though sociologists have examined how mass incarceration affects stratification, remarkably little is known about how it shapes educational disparities. Analyzing the Fragile Families Study and its rich paternal incarceration data, I ask whether black and white children with fathers who have been incarcerated are less prepared for school both cognitively and non-cognitively as a result, and whether racial and gendered disparities in incarceration help explain the persistence of similar gaps in educational outcomes and trajectories. Using a variety of estimation strategies, I show that expe...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">3768</td>
-<td>Social Problems</td>
-<td>Economic breakdown and collective action</td>
-<td>0.660584</td>
+<td data-quarto-table-cell-role="th">2219</td>
+<td>Research consistently demonstrates that black students are disproportionately subject to behavioral sanctions, yet little is known about contextual variation. This paper explores the relationship between school racial composition and racial inequality in discipline. Prior work suggests that demographic composition predicts harsh punishment of minorities. Accordingly, a threat framework suggests that increases in black student enrollment correspond to increases in punitive school policies. Results from this paper find some support for this hypothesis, finding that the percent of black stude...</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">4400</td>
-<td>Sociology of Race and Ethnicity</td>
-<td>The Anti-oppressive Value of Critical Race Theory and Intersectionality in Social Movement Study</td>
-<td>0.652746</td>
+<td data-quarto-table-cell-role="th">3590</td>
+<td>School disciplinary processes are an important mechanism of inequality in education. Most prior research in this area focuses on the significantly higher rates of punishment among African American boys, but in this article, we turn our attention to the discipline of African American girls. Using advanced multilevel models and a longitudinal data set of detailed school discipline records, we analyze interactions between race and gender on office referrals. The results show troubling and significant disparities in the punishment of African American girls. Controlling for background variables...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">5221</td>
-<td>Social Currents</td>
-<td>Assessing the Explanatory Power of Social Movement Theories across the Life Course of the Civil Rights Movement</td>
-<td>0.641801</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">8064</td>
-<td>Sociological Perspectives</td>
-<td>Policy Relay: How Affirmative Consent Went from Controversy to Convention</td>
-<td>0.632110</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">4489</td>
-<td>Theory and Society</td>
-<td>Combining transition studies and social movement theory: towards a new research agenda</td>
-<td>0.631707</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">6325</td>
-<td>Social Forces</td>
-<td>Pathways to modes of movement participation: Micromobilization in the nashville civil rights movement</td>
-<td>0.629331</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">2482</td>
-<td>American Sociological Review</td>
-<td>Tactical Innovation in Social Movements: The Effects of Peripheral and Multi-Issue Protest</td>
-<td>0.616886</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">6201</td>
-<td>City and Community</td>
-<td>Confronting Scale: A Strategy of Solidarity in Urban Social Movements, New York City and Beyond</td>
-<td>0.606433</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">1474</td>
-<td>Sociological Forum</td>
-<td>Be Careful What You Wish For: The Ironic Connection Between the Civil Rights Struggle and Today's Divided America</td>
-<td>0.596116</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">4818</td>
-<td>Qualitative Sociology</td>
-<td>Life Histories and Political Commitment in a Poor People’s Movement</td>
-<td>0.581159</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">5574</td>
-<td>Sociological Theory</td>
-<td>Overflowing Channels: How Democracy Didn’t Work as Planned (and Perhaps a Good Thing It Didn’t)</td>
-<td>0.561438</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">1278</td>
-<td>Sociological Science</td>
-<td>Dissecting The Spirit Of Gezi: Influence vs. selection in the occupy Gezi movement</td>
-<td>0.559833</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">3367</td>
-<td>Social Science Research</td>
-<td>How social media matter: Repression and the diffusion of the Occupy Wall Street movement</td>
-<td>0.559743</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">4354</td>
-<td>Sociological Inquiry</td>
-<td>Practicing Gender and Race in Online Activism to Improve Safe Public Space in Sweden</td>
-<td>0.557239</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">7128</td>
-<td>Symbolic Interaction</td>
-<td>“Meet Them Where They Are”: Attentional Processes in Social Movement Listening</td>
-<td>0.546802</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">9150</td>
-<td>Social Networks</td>
-<td>How networks of social movement issues motivate climate resistance</td>
-<td>0.531231</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">4094</td>
-<td>Work and Occupations</td>
-<td>Renewed Activism for the Labor Movement: The Urgency of Young Worker Engagement</td>
-<td>0.527430</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">3722</td>
-<td>Social Psychology Quarterly</td>
-<td>Measuring Resonance and Dissonance in Social Movement Frames With Affect Control Theory</td>
-<td>0.505426</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">8292</td>
-<td>Du Bois Review</td>
-<td>REACTION to the BLACK CITY AS A CAUSE of MODERN CONSERVATISM</td>
-<td>0.505141</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">4360</td>
-<td>Sociological Methods and Research</td>
-<td>Size Matters: Quantifying Protest by Counting Participants</td>
-<td>0.504456</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">7333</td>
-<td>Gender and Society</td>
-<td>Immigrant and Refugee Youth Organizing in Solidarity With the Movement for Black Lives</td>
-<td>0.497979</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">2597</td>
-<td>Poetics</td>
-<td>Political space and the space of polities: Doing politics across nations</td>
-<td>0.487815</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">833</td>
-<td>Sociology of Education</td>
-<td>The Origins of Race-conscious Affirmative Action in Undergraduate Admissions: A Comparative Analysis of Institutional Change in Higher Education</td>
-<td>0.465736</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">8179</td>
-<td>Journal of Marriage and Family</td>
-<td>Central American immigrant mothers' narratives of intersecting oppressions: A resistant knowledge project</td>
-<td>0.403927</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">2628</td>
-<td>Demography</td>
-<td>Large-Scale Urban Riots and Residential Segregation: A Case Study of the 1960s U.S. Riots</td>
-<td>0.347279</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">7289</td>
-<td>Journal of Health and Social Behavior</td>
-<td>From Medicine to Health: The Proliferation and Diversification of Cultural Authority</td>
-<td>0.344940</td>
+<td data-quarto-table-cell-role="th">5735</td>
+<td>Punitive and disciplinary forms of governance disproportionately target low-income Black Americans for surveillance and punishment, and research finds far-reaching consequences of such criminalization. Drawing on in-depth interviews with 46 low-income Black mothers of adolescents in urban neighborhoods, this article advances understanding of the long reach of criminalization by examining the intersection of two related areas of inquiry: the criminalization of Black youth and the institutional scrutiny and punitive treatment of Black mothers. Findings demonstrate that poor Black mothers cal...</td>
 </tr>
 </tbody>
 </table>
@@ -1012,172 +557,57 @@ Quintile 16:</code></pre>
 </div>
 </div>
 </div>
-<p>Can I add to my CV that I have the <a href="https://academic.oup.com/socpro/article-abstract/64/1/133/2670547?redirectedFrom=fulltext">most movementy article</a> in Social Problems?</p>
-<p>Okay, now a different concept. How quantitative is the research?</p>
-<div id="cell-44" class="cell" data-execution_count="74">
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>quantitative_words <span class="op">=</span> <span class="st">', '</span>.join([</span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"surveys"</span>,</span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"experiments"</span>,</span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quasi-experiments"</span>,</span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"regression analysis"</span>,</span>
-<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"statistical analysis"</span>,</span>
-<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"correlation"</span>,</span>
-<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>])</span>
-<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>quantitative_embedding <span class="op">=</span> model.encode(quantitative_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="cell-45" class="cell" data-execution_count="75">
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'abstract_quant_similarity'</span>] <span class="op">=</span> df[<span class="st">'Abstract'</span>].<span class="bu">apply</span>(string_embedding_sim, </span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>                                                       text2_embedding<span class="op">=</span>quantitative_embedding)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="cell-46" class="cell" data-execution_count="76">
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>df.groupby(<span class="st">'Source title'</span>)[<span class="st">'abstract_quant_similarity'</span>].mean().sort_values(ascending<span class="op">=</span><span class="va">True</span>).plot(kind<span class="op">=</span><span class="st">'barh'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display">
+<p>Again, seems like a plausible set of results. Finally, let’s try to swap out the method.</p>
+<div id="cell-25" class="cell" data-execution_count="83">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> transform_and_match_df(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    text<span class="op">=</span>abstract,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    remove_concept<span class="op">=</span><span class="st">"survey, regression, statistical analysis"</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    add_concept <span class="op">=</span> <span class="st">"in-depth interviews, participant observation, enthography, qualitative research"</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span> df,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    feature_name <span class="op">=</span> <span class="st">"abstract_encodings"</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>r[[<span class="st">"Abstract"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="83">
 <div>
-<figure class="figure">
-<p><img src="sentence-embeddings-ii_files/figure-html/cell-29-output-1.png" class="img-fluid figure-img"></p>
-</figure>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Abstract</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">6741</td>
+<td>In this research, I use theories of framing and social construction to investigate how race and gender are featured in national news coverage of the school-to-prison pipeline, and how policies and practices funnel students from school to the criminal justice system. Results indicate that there are three primary narratives surrounding the school-to-prison pipeline. The first is a narrative that harsh disciplinary practices in schools are irrational and negatively impact all students. The second narrative crafts the school-to-prison pipeline as a social problem for all Black students irrespe...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5859</td>
+<td>Although Black mothers are disproportionately represented among formerly incarcerated mothers in the United States, existing research has largely neglected to document the challenges they face in resuming their parenting roles after prison or jail. This study addresses this gap using 18 months of participant observations with formerly incarcerated Black women to examine how state surveillance under post-release supervision and child welfare services shapes and constrains formerly incarcerated Black women's mothering practices. The study develops a typology of three context-specific strateg...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">5735</td>
+<td>Punitive and disciplinary forms of governance disproportionately target low-income Black Americans for surveillance and punishment, and research finds far-reaching consequences of such criminalization. Drawing on in-depth interviews with 46 low-income Black mothers of adolescents in urban neighborhoods, this article advances understanding of the long reach of criminalization by examining the intersection of two related areas of inquiry: the criminalization of Black youth and the institutional scrutiny and punitive treatment of Black mothers. Findings demonstrate that poor Black mothers cal...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">9348</td>
+<td>Numerous articles and textbooks advise qualitative researchers on accessing “hard-to-reach” or “hidden” populations. In this article, I compare two studies that I conducted with justice-involved women in the United States: a yearlong ethnography inside a state women’s prison and an interview study with formerly incarcerated women. Although these two populations are interconnected—and both are widely deemed hard-to-reach—the barriers to access differed. In the prison study, hard-to-reach reflected an issue of institutional legitimacy, in which researchers must demonstrate themselves and the...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">279</td>
+<td>Though sociologists have examined how mass incarceration affects stratification, remarkably little is known about how it shapes educational disparities. Analyzing the Fragile Families Study and its rich paternal incarceration data, I ask whether black and white children with fathers who have been incarcerated are less prepared for school both cognitively and non-cognitively as a result, and whether racial and gendered disparities in incarceration help explain the persistence of similar gaps in educational outcomes and trajectories. Using a variety of estimation strategies, I show that expe...</td>
+</tr>
+</tbody>
+</table>
+
 </div>
 </div>
 </div>
-<p>Very plausible, although I <em>think</em> that <em>SM&amp;R</em> scores highest both because the publish lots of quantitative work plus the abstracts rarely discuss anything but methods, so it’s not quite an apples-to-apples comparison.</p>
-<p>Finally, how are the two concepts related at the abstract level?</p>
-<div id="cell-48" class="cell" data-execution_count="77">
-<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Assuming df is your DataFrame</span></span>
-<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate the Pearson correlation coefficient</span></span>
-<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>correlation <span class="op">=</span> df[<span class="st">'abstract_quant_similarity'</span>].corr(df[<span class="st">'abstract_movement_similarity'</span>])</span>
-<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Determine the common range for both axes based on the min and max of both series</span></span>
-<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>common_range <span class="op">=</span> [</span>
-<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">min</span>(df[<span class="st">'abstract_quant_similarity'</span>].<span class="bu">min</span>(), df[<span class="st">'abstract_movement_similarity'</span>].<span class="bu">min</span>()), </span>
-<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">max</span>(df[<span class="st">'abstract_quant_similarity'</span>].<span class="bu">max</span>(), df[<span class="st">'abstract_movement_similarity'</span>].<span class="bu">max</span>())</span>
-<span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb46-14"><a href="#cb46-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-15"><a href="#cb46-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the scatter plot with square dimensions</span></span>
-<span id="cb46-16"><a href="#cb46-16" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))  <span class="co"># Makes the figure square in size</span></span>
-<span id="cb46-17"><a href="#cb46-17" aria-hidden="true" tabindex="-1"></a>plt.scatter(df[<span class="st">'abstract_quant_similarity'</span>], df[<span class="st">'abstract_movement_similarity'</span>], alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
-<span id="cb46-18"><a href="#cb46-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-19"><a href="#cb46-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Set the same range for both X and Y axes</span></span>
-<span id="cb46-20"><a href="#cb46-20" aria-hidden="true" tabindex="-1"></a>plt.xlim(common_range)</span>
-<span id="cb46-21"><a href="#cb46-21" aria-hidden="true" tabindex="-1"></a>plt.ylim(common_range)</span>
-<span id="cb46-22"><a href="#cb46-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-23"><a href="#cb46-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-24"><a href="#cb46-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Add a title with the correlation coefficient, formatted to two decimal places</span></span>
-<span id="cb46-25"><a href="#cb46-25" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="ss">f'Scatter Plot of Quantitative vs. Movement Similarity in Abstracts</span><span class="ch">\n</span><span class="ss">Correlation: </span><span class="sc">{</span>correlation<span class="sc">:.2f}</span><span class="ss">'</span>)</span>
-<span id="cb46-26"><a href="#cb46-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-27"><a href="#cb46-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Add x and y labels</span></span>
-<span id="cb46-28"><a href="#cb46-28" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'Quantitative Similarity'</span>)</span>
-<span id="cb46-29"><a href="#cb46-29" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'Movement Similarity'</span>)</span>
-<span id="cb46-30"><a href="#cb46-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-31"><a href="#cb46-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Ensure the aspect ratio is equal to make the plot truly square</span></span>
-<span id="cb46-32"><a href="#cb46-32" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">'equal'</span>, adjustable<span class="op">=</span><span class="st">'box'</span>)</span>
-<span id="cb46-33"><a href="#cb46-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-34"><a href="#cb46-34" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="sentence-embeddings-ii_files/figure-html/cell-30-output-1.png" class="img-fluid figure-img"></p>
-</figure>
-</div>
-</div>
-</div>
-<p>I interpret this as both (1) movements research is not heavily quantitative and (2) abstracts that discuss movement theories and cases spend less time talking about methods, but that’s is probably also true of most articles that are about something rather than methods.</p>
-<p>To do: Can you do math with sentence embeddings, like what’s a similar paper but instead of analyzing surveys, uses in-depth interviews? Here’s a sample code from ChatGPT.</p>
-<div id="cell-50" class="cell" data-execution_count="83">
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer, util</span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch <span class="im">import</span> nn</span>
-<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> transform_and_match(text, remove_concept, add_concept, candidates):</span>
-<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
-<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a><span class="co">    Transforms the text by removing one concept and adding another, then finds the nearest match from candidates.</span></span>
-<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
-<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Initialize the model</span></span>
-<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> SentenceTransformer(<span class="st">'all-MiniLM-L6-v2'</span>)</span>
-<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Generate embeddings</span></span>
-<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>    text_embedding <span class="op">=</span> model.encode(text, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a>    remove_embedding <span class="op">=</span> model.encode(remove_concept, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a>    add_embedding <span class="op">=</span> model.encode(add_concept, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a>    candidate_embeddings <span class="op">=</span> model.encode(candidates, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-18"><a href="#cb47-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Perform vector arithmetic (text - remove + add)</span></span>
-<span id="cb47-19"><a href="#cb47-19" aria-hidden="true" tabindex="-1"></a>    transformed_embedding <span class="op">=</span> text_embedding <span class="op">-</span> remove_embedding <span class="op">+</span> add_embedding</span>
-<span id="cb47-20"><a href="#cb47-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-21"><a href="#cb47-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Compute cosine similarities between the transformed embedding and each candidate</span></span>
-<span id="cb47-22"><a href="#cb47-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Ensure all tensors are moved to CPU memory before conversion to NumPy</span></span>
-<span id="cb47-23"><a href="#cb47-23" aria-hidden="true" tabindex="-1"></a>    similarities <span class="op">=</span> util.cos_sim(transformed_embedding, candidate_embeddings).cpu()</span>
-<span id="cb47-24"><a href="#cb47-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-25"><a href="#cb47-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Find the index of the highest similarity score</span></span>
-<span id="cb47-26"><a href="#cb47-26" aria-hidden="true" tabindex="-1"></a>    nearest_match_idx <span class="op">=</span> similarities.argmax()</span>
-<span id="cb47-27"><a href="#cb47-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-28"><a href="#cb47-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Return the nearest matching candidate text</span></span>
-<span id="cb47-29"><a href="#cb47-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> candidates[nearest_match_idx]</span>
-<span id="cb47-30"><a href="#cb47-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-31"><a href="#cb47-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-32"><a href="#cb47-32" aria-hidden="true" tabindex="-1"></a>nearest_match <span class="op">=</span> transform_and_match(text, remove_concept, add_concept, candidates)</span>
-<span id="cb47-33"><a href="#cb47-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-34"><a href="#cb47-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Nearest match: </span><span class="sc">{</span>nearest_match<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Nearest match: A love story that unfolds in the least expected places.</code></pre>
-</div>
-</div>
-<div id="cell-51" class="cell" data-execution_count="88">
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer, util</span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compute_semantic_direction_cmd(document, concept_pairs):</span>
-<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Initialize the model</span></span>
-<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> SentenceTransformer(<span class="st">'all-MiniLM-L6-v2'</span>)</span>
-<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Generate embedding for the document</span></span>
-<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>    doc_embedding <span class="op">=</span> model.encode(document, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Generate embeddings for the concept pairs and compute the semantic direction vector</span></span>
-<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>    direction_vectors <span class="op">=</span> []</span>
-<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (positive, negative) <span class="kw">in</span> concept_pairs:</span>
-<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>        pos_embedding <span class="op">=</span> model.encode(positive, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>        neg_embedding <span class="op">=</span> model.encode(negative, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>        direction_vectors.append(pos_embedding <span class="op">-</span> neg_embedding)</span>
-<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Convert list of tensors to a single tensor and move to CPU</span></span>
-<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>    direction_vectors_tensor <span class="op">=</span> torch.stack(direction_vectors).cpu()</span>
-<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Aggregate the direction vectors to derive a single vector for the semantic direction</span></span>
-<span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a>    semantic_direction <span class="op">=</span> torch.mean(direction_vectors_tensor, axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb49-24"><a href="#cb49-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-25"><a href="#cb49-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Move document embedding to CPU</span></span>
-<span id="cb49-26"><a href="#cb49-26" aria-hidden="true" tabindex="-1"></a>    doc_embedding_cpu <span class="op">=</span> doc_embedding.cpu()</span>
-<span id="cb49-27"><a href="#cb49-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-28"><a href="#cb49-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Project the document embedding onto the semantic direction</span></span>
-<span id="cb49-29"><a href="#cb49-29" aria-hidden="true" tabindex="-1"></a>    projection <span class="op">=</span> torch.dot(doc_embedding_cpu, semantic_direction) <span class="op">/</span> torch.norm(semantic_direction)</span>
-<span id="cb49-30"><a href="#cb49-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-31"><a href="#cb49-31" aria-hidden="true" tabindex="-1"></a>    <span class="co"># CMD score is the projection length which indicates engagement with the semantic direction</span></span>
-<span id="cb49-32"><a href="#cb49-32" aria-hidden="true" tabindex="-1"></a>    cmd_score <span class="op">=</span> projection.item()</span>
-<span id="cb49-33"><a href="#cb49-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-34"><a href="#cb49-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cmd_score</span>
-<span id="cb49-35"><a href="#cb49-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-36"><a href="#cb49-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Example usage with the provided concept pairs</span></span>
-<span id="cb49-37"><a href="#cb49-37" aria-hidden="true" tabindex="-1"></a>document <span class="op">=</span> <span class="st">"The policy initiatives reflect a high tax approach rather than a free market one."</span></span>
-<span id="cb49-38"><a href="#cb49-38" aria-hidden="true" tabindex="-1"></a>concept_pairs <span class="op">=</span> [</span>
-<span id="cb49-39"><a href="#cb49-39" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"liberal"</span>, <span class="st">"conservative"</span>),</span>
-<span id="cb49-40"><a href="#cb49-40" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"progressive"</span>, <span class="st">"unprogressive"</span>),</span>
-<span id="cb49-41"><a href="#cb49-41" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"democrat"</span>, <span class="st">"republican"</span>),</span>
-<span id="cb49-42"><a href="#cb49-42" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"untraditional"</span>, <span class="st">"traditional"</span>)</span>
-<span id="cb49-43"><a href="#cb49-43" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb49-44"><a href="#cb49-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-45"><a href="#cb49-45" aria-hidden="true" tabindex="-1"></a>cmd_score <span class="op">=</span> compute_semantic_direction_cmd(document, concept_pairs)</span>
-<span id="cb49-46"><a href="#cb49-46" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Document's engagement with the concept of 'conservative' relative to 'liberal': </span><span class="sc">{</span>cmd_score<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Document's engagement with the concept of 'conservative' relative to 'liberal': -0.013234419748187065</code></pre>
-</div>
-</div>
+<p>Drift a bit toward incarceration, and the methods thing wasn’t perfectly implemented, seemed to grab some things that were vague about the method, or perhaps described the quantitative work in qualitative ways.</p>
+<p>Overall, I would put the results comparable to the first page of a Google search. The first choice isn’t necessarily what I was looking for, but, overall, the top five give me something to work with.</p>
 
 
 
