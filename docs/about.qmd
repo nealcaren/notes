@@ -1,0 +1,22 @@
+---
+title: "About"
+image: ash_guy.webp
+about:
+  template: jolla
+  links:
+    - icon: twitter
+      text: BlueSky
+      href: https://bsky.app/profile/haphazardsoc.bsky.social
+    - icon: github
+      text: Github
+      href: https://github.com/nealcaren
+
+---
+
+Python notebooks, mostly written to myself, on things that worked or didn't work. 
+
+All art is AI generated in the style of early twentiety century Ashcan sketches.
+
+Blog is built using [Quarto](http://quarto.org).
+
+by [Neal Caren](http://nealcaren.org)
