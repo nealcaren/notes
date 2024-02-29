@@ -7,10 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Neal Caren, Associate Professor, Department of Sociology, University of North Carolina, Chapel Hill">
-<meta name="dcterms.date" content="2024-02-17">
-<meta name="description" content="More using Pydantic for OpenAI function calling">
+<meta name="dcterms.date" content="2024-02-29">
+<meta name="description" content="Extracting text from media HTML files">
 
-<title>notes - From Protest to</title>
+<title>notes - From Articles to Events, Part&nbsp;II</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -109,8 +109,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <link rel="stylesheet" href="../../styles.css">
-<meta name="twitter:title" content="notes - From Protest to">
-<meta name="twitter:description" content="More using Pydantic for OpenAI function calling">
+<meta name="twitter:title" content="notes - From Articles to Events, Part&nbsp;II">
+<meta name="twitter:description" content="Extracting text from media HTML files">
 <meta name="twitter:image" content="newspaper-protest.webp">
 <meta name="twitter:card" content="summary_large_image">
 </head>
@@ -157,14 +157,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <header id="title-block-header" class="quarto-title-block default page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
-      <h1 class="title">From Protest to</h1>
+      <h1 class="title">From Articles to Events, Part&nbsp;II</h1>
                   <div>
         <div class="description">
-          More using Pydantic for OpenAI function calling
+          Extracting text from media HTML files
         </div>
       </div>
                           <div class="quarto-categories">
-                <div class="quarto-category">OpenAI</div>
+                <div class="quarto-category">newspaper3k</div>
+                <div class="quarto-category">Articles to Events</div>
               </div>
                   </div>
   </div>
@@ -176,7 +177,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">February 17, 2024</p>
+        <p class="date">February 29, 2024</p>
       </div>
     </div>
     
@@ -195,7 +196,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<div id="cell-1" class="cell" data-execution_count="1">
+<p>This is part one of an attempt to expand on a working paper, “<a href="https://osf.io/dvht7">Extracting protest events from newspaper articles with ChatGPT</a>” that I wrote with Andy Andrews and Rashawn Ray. In that paper, we tested whether ChatGPT could replace my undergraduate RAs in extracting details about Black Lives Matter protests from media accounts. This time, I want to expand it to include more articles, movements, and variables.</p>
+<p><strong>Earlier Installments</strong> * Part 1: <a href="https://nealcaren.github.io/notes/posts/from-articles-to-events/01-downloading-articles.html">From Articles to Events</a></p>
+<p>In this part, I’m taking the downloaded HTML files and extracting the useful information, such as the article headline and text. Rather than build custom parsers for each webpage, I’m going to use the wonderful <a href="https://newspaper.readthedocs.io/en/latest/">Newspaper3k</a> library to extract the relevant information from each article. It works on almost every media site, so it’s incredibly useful for turning HTML into something useful.</p>
+<div id="cell-2" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pip install newspaper3k</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Requirement already satisfied: newspaper3k in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (0.2.8)
@@ -228,12 +232,14 @@ Requirement already satisfied: filelock&gt;=3.0.8 in /Users/nealcaren/anaconda3/
 Note: you may need to restart the kernel to use updated packages.</code></pre>
 </div>
 </div>
-<div id="cell-2" class="cell" data-execution_count="2">
+<div id="cell-3" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> newspaper <span class="im">import</span> Article</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> slugify <span class="im">import</span> slugify</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-3" class="cell" data-execution_count="3">
+<p>I’ve used a variant of the function below for more than five years. The documentation for <code>newspaper</code> is a little vague on using the library when you already downloaded the HTML, but this version works. There can be more relevant stuff in the <code>meta_data</code> field, but it varies by paper and overtime, as they are primarily fields and values to improve the pages Google ranking.</p>
+<div id="cell-5" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_article_info(file_location):</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> <span class="bu">open</span>(file_location, <span class="st">'rb'</span>) <span class="im">as</span> fh:</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        html <span class="op">=</span> fh.read()</span>
@@ -247,77 +253,84 @@ Note: you may need to restart the kernel to use updated packages.</code></pre>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                       <span class="st">'authors'</span>     : article.authors,</span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>                       <span class="st">'date'</span>        : article.publish_date,</span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>                       <span class="st">'description'</span> : article.meta_description,</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>                       <span class="st">'site'</span>         : article.meta_data[<span class="st">'og'</span>].get(<span class="st">'site_name'</span>, <span class="st">''</span>),</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>                       <span class="st">'site'</span>        : article.meta_data[<span class="st">'og'</span>].get(<span class="st">'site_name'</span>, <span class="st">''</span>),</span>
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>                       <span class="st">'publisher'</span>   : article.meta_data[<span class="st">'publisher'</span>]}</span>
 <span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> article_details</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-4" class="cell" data-execution_count="4">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_existing_data(json_file):</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Load existing JSON data into a DataFrame."""</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.read_json(json_file)</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> (<span class="pp">ValueError</span>, <span class="pp">FileNotFoundError</span>):</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame()</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> is_file_processed(df, file_path):</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Check if a file has been processed."""</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="st">'file_location'</span> <span class="kw">in</span> df.columns:</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> df[<span class="st">'file_location'</span>].isin([file_path]).<span class="bu">any</span>()</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">False</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> update_dataframe(df, file_path):</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Update the DataFrame with new article information."""</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    article_info <span class="op">=</span> get_article_info(file_path)</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    article_info[<span class="st">'file_location'</span>] <span class="op">=</span> file_path</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check if the DataFrame is empty and initialize columns if necessary</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> df.empty:</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> key <span class="kw">in</span> article_info.keys():</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>            df[key] <span class="op">=</span> pd.Series(dtype<span class="op">=</span><span class="st">'object'</span>)</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add the new article information as a new row</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    new_row_index <span class="op">=</span> <span class="bu">len</span>(df)</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    df.loc[new_row_index] <span class="op">=</span> article_info</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> save_to_json(df, json_file):</span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Save the DataFrame to a JSON file."""</span></span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    df.to_json(json_file, orient<span class="op">=</span><span class="st">"records"</span>, date_format<span class="op">=</span><span class="st">"iso"</span>)</span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> process_files(folder_path, json_file):</span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> load_existing_data(json_file)</span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="bu">file</span> <span class="kw">in</span> os.listdir(folder_path):</span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>        file_path <span class="op">=</span> os.path.join(folder_path, <span class="bu">file</span>)</span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> is_file_processed(df, file_path):</span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>            <span class="cf">try</span>:</span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>                df <span class="op">=</span> update_dataframe(df, file_path)</span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>            <span class="cf">except</span>:</span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>                <span class="bu">print</span>(file_path)</span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>    save_to_json(df, json_file)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Applying the <code>get_article_info</code> function to a single file is pretty straightforward, but it takes a few seconds, so, ideally, you only do it once per file. Things get more complicated when a few articles, but then add new HTML files to the folder. The set of functions below creates a dataframe to store the results, or loads one if it already exists, and then processes each of the files that we want and that we haven’t already processed.</p>
+<div id="cell-7" class="cell" data-execution_count="24">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_existing_data(json_file):</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Load existing JSON data into a DataFrame."""</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.read_json(json_file)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> (<span class="pp">ValueError</span>, <span class="pp">FileNotFoundError</span>):</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame()</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> is_file_processed(df, file_path):</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Check if a file has been processed."""</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="st">'file_location'</span> <span class="kw">in</span> df.columns:</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> df[<span class="st">'file_location'</span>].isin([file_path]).<span class="bu">any</span>()</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> update_dataframe(df, file_path):</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Update the DataFrame with new article information."""</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    article_info <span class="op">=</span> get_article_info(file_path)  <span class="co"># Assuming this function exists and works as expected</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    article_info[<span class="st">'file_location'</span>] <span class="op">=</span> file_path</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check if the DataFrame is empty and initialize columns if necessary</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> df.empty:</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> key <span class="kw">in</span> article_info.keys():</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>            df[key] <span class="op">=</span> pd.Series(dtype<span class="op">=</span><span class="st">'object'</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add the new article information as a new row</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    new_row_index <span class="op">=</span> <span class="bu">len</span>(df)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    df.loc[new_row_index] <span class="op">=</span> article_info</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> save_to_json(df, json_file):</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Save the DataFrame to a JSON file."""</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    df.to_json(json_file, orient<span class="op">=</span><span class="st">"records"</span>, date_format<span class="op">=</span><span class="st">"iso"</span>)</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> process_files(folder_path, json_file, sources_json):</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> load_existing_data(json_file)</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Filter the list of files to process based on 'source_1' column in sources_json</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>    sources_df <span class="op">=</span> pd.read_json(sources_json)</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>    urls_to_process  <span class="op">=</span> sources_df[<span class="st">'source_1'</span>].tolist()</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>    files_to_process <span class="op">=</span> [slugify(url)<span class="op">+</span> <span class="st">".html"</span> <span class="cf">for</span> url <span class="kw">in</span> urls_to_process]</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="bu">file</span> <span class="kw">in</span> os.listdir(folder_path):</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">file</span> <span class="kw">in</span> files_to_process:  <span class="co"># Check if the file should be processed</span></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>            file_path <span class="op">=</span> os.path.join(folder_path, <span class="bu">file</span>)</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">not</span> is_file_processed(df, file_path):</span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>                <span class="cf">try</span>:</span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>                    df <span class="op">=</span> update_dataframe(df, file_path)</span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>                <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:  <span class="co"># It's a good practice to catch specific exceptions</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>                    <span class="bu">print</span>(<span class="ss">f"Error processing file </span><span class="sc">{</span>file_path<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>    save_to_json(df, json_file)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-5" class="cell" data-execution_count="5">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example usage</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>folder_path <span class="op">=</span> <span class="st">'HTML'</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>json_file <span class="op">=</span> <span class="st">'articles_info.json'</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>process_files(folder_path, json_file)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-8" class="cell" data-execution_count="25">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>process_files(<span class="st">'_HTML'</span>, </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>              <span class="st">'article_texts.json'</span>, </span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>              <span class="st">'ccc_sample.json'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-6" class="cell" data-execution_count="6">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_json(<span class="st">'articles_info.json'</span>)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="bu">len</span>(df))</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>df.sample(<span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="cell-9" class="cell" data-execution_count="29">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>text_df <span class="op">=</span> pd.read_json(<span class="st">'article_texts.json'</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="bu">len</span>(text_df))</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>text_df.sample(<span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>3019</code></pre>
+<pre><code>2733</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="6">
+<div class="cell-output cell-output-display" data-execution_count="29">
 <div>
 
 
@@ -338,40 +351,40 @@ Note: you may need to restart the kernel to use updated packages.</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">644</td>
-<td>VIDEO: South Carolinians to rally this weekend...</td>
-<td>Police: Baby died after mother mistakenly put ...</td>
-<td>https://www.wbrc.com/video/2023/06/12/video-so...</td>
-<td>[]</td>
-<td>2023-06-12T00:00:00.000</td>
-<td></td>
-<td>https://www.wbrc.com</td>
+<td data-quarto-table-cell-role="th">1338</td>
+<td>Rally urges Montana leaders to extend meal ass...</td>
+<td>Earlier this year, Montana leaders announced t...</td>
+<td>https://www.ktvh.com/news/rally-urges-montana-...</td>
+<td>[Jonathon Ambarian]</td>
+<td>2023-07-11T01:48:51.124</td>
+<td>Earlier this year, Montana leaders announced t...</td>
+<td>KTVH</td>
 <td>{}</td>
-<td>HTML/https-www-wbrc-com-video-2023-06-12-video...</td>
+<td>_HTML/https-www-ktvh-com-news-rally-urges-mont...</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">2919</td>
-<td>Telegram: Contact @WhiteLivesMatterOfficial</td>
-<td></td>
-<td>:/HTML/https-t-me-whitelivesmatterofficial-880...</td>
-<td>[]</td>
-<td>None</td>
-<td></td>
-<td>Telegram</td>
+<td data-quarto-table-cell-role="th">306</td>
+<td>NYC students protest gun violence after incide...</td>
+<td>While the nation reels from tragedy this week ...</td>
+<td>https://www.nydailynews.com/2023/03/30/nyc-stu...</td>
+<td>[Cayla Bamberger]</td>
+<td>2023-03-30T19:33:59.000Z</td>
+<td>While the nation reels from tragedy this week ...</td>
+<td>New York Daily News</td>
 <td>{}</td>
-<td>HTML/https-t-me-whitelivesmatterofficial-8804....</td>
+<td>_HTML/https-www-nydailynews-com-new-york-educa...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">2732</td>
-<td>Ballston Spa eyes new permit requirements afte...</td>
-<td>Belmont Stakes at Saratoga: What we'll see\n\n...</td>
-<td>https://www.dailygazette.com/archives/ballston...</td>
-<td>[Tyler A. Mcneil]</td>
-<td>2023-08-06T00:00:00.000</td>
-<td>BALLSTON SPA — Ballston Spa officials have cal...</td>
-<td>The Daily Gazette</td>
+<td data-quarto-table-cell-role="th">717</td>
+<td>Mission Hospital nurses to hold rally today fo...</td>
+<td>Press release from National Nurses United:\n\n...</td>
+<td>http://mountainx.com/blogwire/mission-hospital...</td>
+<td>[]</td>
+<td>None</td>
+<td>Asheville and Western North Carolina News | Lo...</td>
+<td>Mountain Xpress</td>
 <td>{}</td>
-<td>HTML/https-dailygazette-com-2023-08-06-ballsto...</td>
+<td>_HTML/https-mountainx-com-blogwire-mission-hos...</td>
 </tr>
 </tbody>
 </table>
@@ -379,6 +392,7 @@ Note: you may need to restart the kernel to use updated packages.</code></pre>
 </div>
 </div>
 </div>
+<p>Pretty good. Next up: Are they actually media accounts?</p>
 
 
 
