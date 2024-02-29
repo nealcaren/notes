@@ -1,0 +1,18 @@
+[
+  {
+    "listing": "/index.html",
+    "items": [
+      "/posts/from-articles-to-events/02-extracting-text.html",
+      "/posts/from-articles-to-events/01-downloading-articles.html",
+      "/posts/sentence-embeddings/sentence-embeddings-ii.html",
+      "/posts/sentence-embeddings/sentence-embeddings.html",
+      "/posts/abstracts/first-question.html",
+      "/posts/abstracts/synthetic-abstracts.html",
+      "/posts/scraping/bulk-download.html",
+      "/posts/function-calling/pydantic-sm.html",
+      "/posts/function-calling/pydantic.html",
+      "/posts/transcription/whisper-plus.html",
+      "/posts/tts/tts.html"
+    ]
+  }
+]

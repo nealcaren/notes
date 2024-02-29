@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.549">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2024-02-14">
+<meta name="description" content="Using WhisperpPlus to transcribe an audio file.">
+
+<title>notes - Audio Transcription with Speaker Identification</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+<meta name="twitter:title" content="notes - Audio Transcription with Speaker Identification">
+<meta name="twitter:description" content="Using WhisperpPlus to transcribe an audio file.">
+<meta name="twitter:image" content="transcription.webp">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/nealcaren"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://bsky.app/profile/haphazardsoc.bsky.social"> <i class="bi bi-twitter" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+          <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Audio Transcription with Speaker Identification</h1>
+                  <div>
+        <div class="description">
+          Using WhisperpPlus to transcribe an audio file.
+        </div>
+      </div>
+                          <div class="quarto-categories">
+                <div class="quarto-category">Transcription</div>
+              </div>
+                  </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">February 14, 2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+<div id="cell-1" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pip install <span class="op">--</span>upgrade tiktoken</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Requirement already satisfied: tiktoken in /Users/nealcaren/anaconda3/envs/whisperplus/lib/python3.11/site-packages (0.6.0)
+Requirement already satisfied: regex&gt;=2022.1.18 in /Users/nealcaren/anaconda3/envs/whisperplus/lib/python3.11/site-packages (from tiktoken) (2023.12.25)
+Requirement already satisfied: requests&gt;=2.26.0 in /Users/nealcaren/anaconda3/envs/whisperplus/lib/python3.11/site-packages (from tiktoken) (2.31.0)
+Requirement already satisfied: charset-normalizer&lt;4,&gt;=2 in /Users/nealcaren/anaconda3/envs/whisperplus/lib/python3.11/site-packages (from requests&gt;=2.26.0-&gt;tiktoken) (2.0.4)
+Requirement already satisfied: idna&lt;4,&gt;=2.5 in /Users/nealcaren/anaconda3/envs/whisperplus/lib/python3.11/site-packages (from requests&gt;=2.26.0-&gt;tiktoken) (3.4)
+Requirement already satisfied: urllib3&lt;3,&gt;=1.21.1 in /Users/nealcaren/anaconda3/envs/whisperplus/lib/python3.11/site-packages (from requests&gt;=2.26.0-&gt;tiktoken) (2.1.0)
+Requirement already satisfied: certifi&gt;=2017.4.17 in /Users/nealcaren/anaconda3/envs/whisperplus/lib/python3.11/site-packages (from requests&gt;=2.26.0-&gt;tiktoken) (2023.11.17)
+Note: you may need to restart the kernel to use updated packages.</code></pre>
+</div>
+</div>
+<div id="cell-2" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> tiktoken</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-3" class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> num_tokens_from_string(string: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">int</span>:</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Returns the number of tokens in a text string."""</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    encoding <span class="op">=</span> tiktoken.encoding_for_model(<span class="st">"gpt-3.5-turbo"</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    num_tokens <span class="op">=</span> <span class="bu">len</span>(encoding.encode(string))</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> num_tokens</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>system = f’’’ This text is {section} section in a longer manuscript: {cite}. Condense into a {word-count} word version. Write in the first-person singular. When possible, reuse the original words and phrases. Keep the tone and voice of the original text. Return ONLY the condensed version. References: Acknowledge ONLY central authors whose work informs the discussion. The condensed version will be read aloud, so no text should be in parenthesis ()</p>
+<p>’’’</p>
+<div id="cell-5" class="cell" data-execution_count="69">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>findings <span class="op">=</span> <span class="st">'''</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="st">Descriptive Analysis</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="st">To what extent did BLM influence media attention to Black Americans killed by police? Figure 1one displays the monthly count of 1,074 police killings of Black Americans by their armed status between January 1,st 2013, and December 31,st 2016. Among those with known armed status, around 26%twenty-six percent were non-armed. Figure 2two displays the daily count of articles published in newspapers, magazines, and trade journals that mention Black Americans killed by police in the same period. BLM elevated media attention to police killings of Black Americans after the 2014 Ferguson protests. Movement activity coincided with an increased number of police killings of non-armed Black Americans between August 2014 and July 2015. Most media attention focused on non-armed Black Americans, although there was elevated coverage of armed Black Americans. Media attention was also episodic. Attention was largely driven by high-profile cases of Michael Brown’s death (August 2014), the non-indictments of officers who had killed Eric Garner and Michael Brown (November-December 2014), and the Baltimore protests following Freddie Gray’s death (April-May 2015). Coverage in July 2016 featured the heart-breaking three-day saga of police shootings of Alton Sterling (non-armed) and Philando Castile (armed), and Micah Johnson’s (armed) killing of five Dallas police officers.</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="st">Figure 1. Monthly Police Killings of Black Americans by Armed Status (2013-2016)</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="st"> </span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="st">Figure 2. Daily Print Media Articles on Police Killings of Black Americans by Armed Status (2013-2016)</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="st"> </span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="st">To better account for how BLM shifted media attention before and after the Ferguson protests, I display in tTable 3 three the quantity of media attention to Black Americans within two weeks of their death from the beginning of 2013 to the Ferguson protests and after the Ferguson protests until the end of 2016. Before the Ferguson protests, media outlets were more likely to cover armed Black Americans rather than non-armed Black Americans, thereby reflecting media selection for controlling images of “armed Black criminals.” After the August 2014 Ferguson protests, media outlets became more likely to publish stories about non-armed Black Americans killed by police. Non-armed Black Americans became more likely to be covered after the Ferguson protests (59.0</span><span class="sc">% c</span><span class="st">ompared to 41.3%, p&lt;0.01) and received a greater quantity of attention (44.3 articles per person compared to 4.6 articles, p&lt;0.05). Interestingly, armed Black Americans also became more likely to be covered after the Ferguson protests (59.7</span><span class="sc">% c</span><span class="st">ompared to 50.6%, p&lt;0.05), but these did not extend to more articles per person (13.2 compared to 4.2, p&lt;0.1). Descriptive findings demonstrate BLM’s discursive power in shaping media coverage of Black Americans killed by police after the Ferguson protests. The disproportionate impact for non-armed Black Americans suggests that BLM shifted media attention from that of controlling images of armed Black criminality to unjust police violence against non-armed Black victims. These findings are consistent with prior works that find BLM discursively challenged mainstream media narratives of police killings (Bonilla and Rosa 2015; Freelon, McIlwain, and Clark  2016). While broadly consistent with expectations regarding controlling images and media attention, regression analyses are needed to test whether BLM protests directly impacted media attention and whether this effect is moderated by armed status. </span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="st">Table 3. Media Attention to Black Americans Killed by Police Before and After 2014 Ferguson </span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="st">Protests</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="st">Notes: Media attention aggregates two weeks after each person’s death. Welch Two Sample T-tests are employed to assess statistical significance. +p&lt;0.1; *p&lt;0.05; **p&lt;0.01; ***p&lt;0.001</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="st">Negative Binomial Regression Analysis</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="st">Table 4four depicts four negative binomial models that regress the daily media attention to Black Americans killed by police on person personal characteristics, movement-related variables, and separate models including and excluding interaction of armed status and BLM protests. Coefficients are displayed as incidence rate ratios with standard errors in log counts. All models include control variables, which are removed in the presentation for parsimony. Access to full models and other appendices are in an online supplemental document (https://osf.io/vxd8a/).</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="st">Table 4. Negative Binomial Regression: Effects on Daily Media Attention to Black Americans Killed by Police</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="st">Notes: Coefficients are displayed as incidence ratios and standard errors reported in log counts. Standard errors are robust to multi-way clusters in individuals and DMAs. Reference group is Male, armed, killed with a gunshot, and killed in the Northeast United States. Control variables removed for parsimony. Full table is in Appendix H in the online supplemental document. + p&lt;0.1; * p&lt;0.05; ** p&lt;0.01; *** p&lt;0.001</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="st">Consistent with expectations, armed status shapes media attention to police killings, but is mediated in part by local BLM protests. In model one, non-armed Black Americans compared to armed individuals, compared to armed individuals, receive over five times more daily media articles (p&lt;0.001). The coefficient attenuates but remains significant when controlling for movement factors and interaction effects (β ̂ = 1.96, p&lt;0.05). I test for mediation using a counterfactual-outcome framework suitable for zero-inflated outcomes (Cheng et al. 2018)  . Table 5five indicates local BLM protests mediate 24%twenty-four percent of the total effect of armed status on daily media attention. Protest mediation also seems to be stronger among non-armed Black Americans at 32%thirty-two percent compared to armed Black Americans at 15</span><span class="sc">%f</span><span class="st">ifteen percent (p&lt;0.001). Results support the first hypothesis, but differences in attention to armed and non-armed Black Americans are partially mediated by local BLM protestslocal BLM protests partially mediate differences in attention to armed and non-armed Black Americans. </span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="st">Table 5. Mediation Analysis of Armed Status and BLM Protests on Media Attention</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="st">Notes: Outcome variable is daily media articles, and the mediator is local BLM protests in the past week. Each cell displays a point estimate and its corresponding 95</span><span class="sc">% c</span><span class="st">onfidence interval. Statistical significance is p&lt;0.001 at all estimates. </span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="st">Additionally, I test whether BLM protests influence media attention to Black Americans killed by police. Model three indicates that local BLM protests (β ̂ = 2.23, p&lt;0.001) and national BLM protests (β ̂ = 1.03, p&lt;0.001) are positively associated with daily media attention. Each increase in the standard deviation of local BLM protests in the past week (around one protest), is associated with 2.23 times more daily media articles per person. Each and each increase in standard deviation of country-wide BLM protests in the past week (around twenty protests), is associated with 1.81 times more daily media articles per person. Results support the second hypothesis. </span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="st">Finally, I test in model four whether armed status moderates the impact of BLM protests on media attention. Among armed Black Americans killed by police, each local BLM protest in the past week is associated with 1.57 times more daily media articles (p&lt;0.001). Non-armed Black Americans saw an additional increase by a factor of 1.80 (p&lt;0.001) for a total effect of 2.83 times more daily media articles. Moderation does not extend to country-wide BLM protests. I graph marginal effects to evaluate moderation because interaction coefficients alone are insufficient tocannot interpret nonlinear regression models (Long and Mustillo 2021). Figure 3three displays non-overlapping 95</span><span class="sc">% c</span><span class="st">onfidence intervals across low-to-high protest counts. As protests increase, the marginal effect on media attention between non-armed and armed Black Americans also grows. Three local BLM protests in the past week indicates that non-armed Black Americans are expected to receive on average 8.35 [95% CI: 4.96, 14.07] media articles per dayindicate that non-armed Black Americans are expected to receive, on average, 8.35 [95% CI: 4.96, 14.07] media articles per day, and armed Black Americans are expected to receive 0.78 [95% CI: 0.47, 1.29]. Perceived worthiness of movement claims moderates BLM protests. Police-civilian interactions that align more with “armed Black criminal” controlling images dampen the capacity of local protests to direct media attention compared to non-armed police victims whose circumstances align more with unjust police brutality claims. Results support the third hypothesis for local BLM protests. </span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="st">Figure 3. Marginal Effects of Local BLM Protests by Armed Status on Media Attention to Black Americans Killed by Police </span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="st"> </span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a><span class="st">Notes: Shaded areas represent 95</span><span class="sc">% c</span><span class="st">onfidence intervals. Marginal effects account for control variables present in tTable 4. </span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a><span class="st">While movement and media scholars posit the importance of movement organizations and favorable political opportunities in garnering media attention, these do not extend to BLM’s impact on media attention to police killings. Across all models, neither the presence of local M4BL organizations  nor changes to local representation of Democratic or Black Congressional Representatives have statistically significant associations with media attention. Findings suggest that BLM protests directed media attention to police killings. In summary, results support the expectation that controlling images influence the media outcomes of social movements. Even though local BLM protests garnered media attention to nearby police killings, the impact of local protests varied by the armed status of those killed by police. Local BLM protests matter more for non-armed Black Americans compared to armed Black Americans. </span></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a><span class="st">Assessing Alternative Explanation and Robustness Checks</span></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="st"> I anticipate the possibility that, rather than controlling images, results may be driven by societal shifts in morally acceptable norms around policing. This alternative explanation purports what drove differential coverage between armed and non-armed Black Americans is greater media recognition that non-armed policing deaths represent stronger violations of societal norms, rather than moral boundaries imposed by controlling images that leverage armed Black criminality against BLM’s attempts to humanize Black victims of police violence. I test for whether there is elevated media scrutiny of police killings of individuals for from all ethno-racial backgrounds rather than only Black Americans, as controlling images would suggest. Although these mechanisms are not inconsistent with one another, as controlling images factor into morally acceptable norms, I test for the effects of the impacts of armed status, BLM protests, and their interaction on media attention to both Black and Non-Black Americans killed by police.  Findings that point to similar coefficient estimates of armed status and BLM protests between Black and non-Black Americans would indicate societal shifts around morally acceptable norms of policing. Findings that point to different coefficient estimates between Black and non-Black Americans would indicate that controlling images, which centers center Black movements’ moral contestation against Black criminality for Black humanization, shapes media attention.</span></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a><span class="st">Figure 4four displays the marginal effects of armed status and race on daily media attention to police killings between July 2014 and December 2016. As clearly indicated by different coefficient estimates and non-overlapping confidence intervals, media attention largely focuses on Black Americans killed by police rather than non-Black Americans. Moreover, the figure displays among non-Black Americansthat among non-Black Americans, there is no statistically significant difference in media attention by armed status. Among Black Americans, armed status significantly determines whether police killings received media attentionreceive media attention, as indicated by non-overlapping confidence intervals. Results are largely consistent with ¬¬¬expectations expectations around controlling images rather than general societal shifts of acceptable norms around policing. </span></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="st">Figure 4. Marginal Effects of Racial Differences and Armed Status on Media Attention of Police Killings</span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a><span class="st"> </span></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a><span class="st">Notes: Vertical lines around point estimates represent 95</span><span class="sc">% c</span><span class="st">onfidence intervals. Marginal effects account for control variables present in Appendix B in the online supplemental.</span></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a><span class="st">To evaluate whether racial differences extend to protests and armed status, I present in Table 6six stratified models of Black Americans and non-Black Americans to depict interaction effects of armed status and BLM protests on media attention to police killings. Consistent with expectations of controlling images, the impact of armed status on media attention extends only to Black Americans killed by police. Although However, there is some evidence that armed status factors into media attention to non-Black Americans;, the coefficient is no longer statistically significant in model four after accounting for interaction effects of BLM protests. Among non-Black Americans, BLM protests have no statistically significant effect on media attention, and there is no evidence that BLM protests differed between armed and non-armed police killings. Graphing the marginal effects of local BLM protests and armed status among non-Black Americans, located in Appendix C in the online supplemental, supports this assessment. Appendices A-C also provide further evidence that the main results are specific to Black Americans killed by police instead of all ethno-racial groups. Results lend evidence to the mechanism of controlling images. </span></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a><span class="st">Table 6. Negative Binomial Regression: Effects on Daily Media Attention to Black and Non-Black Americans Killed by Police </span></span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a><span class="st">Notes: Coefficients are displayed as incidence ratios and standard errors reported in log counts. Standard errors are robust to multi-way clusters in individuals and DMAs. Reference group is Male, armed, killed with a gunshot, and killed in the Northeast United States. Control variables removed for parsimony. Full table is in Appendix I in the online supplemental document + p&lt;0.1; * p&lt;0.05; ** p&lt;0.01; *** p&lt;0.001</span></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a><span class="st">Additionally, I conduct conducted several robustness checks to account for reverse causality, heterogeneity of media, and extreme outliers in Appendices E-G located in the online supplemental. Appendix E leads BLM protests by one and two weeks to account for reverse causality. Appendix F stratifies my original model on local and non-local daily media attention. Appendix G runs a logit model on any media coverage per day to account for extreme outliers. Appendix E indicates that protests motivate media coverage rather than coverage driving protests. Appendices F and G depict my results are as largely consistent across sensitivity checks. </span></span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-6" class="cell" data-execution_count="77">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>conclusion <span class="op">=</span> <span class="st">'''While movement scholars highlight media norms, political contexts, and movement infrastructure to direct media attention, scholars have not adequately accounted for whether the perceived worthiness of movement claims also conditions the capacity of protests to direct media attention. Minority-led movements, which confront media narratives that selectively ignore or de-center structural problems of racism, are particularly impacted (Carlson 2016; Jacobs 2000). Using a novel dataset of print media attention to 678 armed and non-armed Black Americans killed by police between July 2014 and December 2016, I test whether the controlling image of the “armed Black criminal” among those killed by police moderates the capacity of Black Lives Matter protests to direct media attention. Results support several primary findings. </span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="st">First, BLM significantly expanded media attention to non-armed Black Americans killed by police following the 2014 Ferguson protests compared to previous media attention that disproportionately covered armed Black Americans. Comparing pre- and post-Ferguson protests, I find that media coverage among non-armed Black Americans increased from 41.3 percent  to 59.0 percent  . Non-armed Black Americans after the Ferguson protests also received, on average, nearly ten times as many articles. Armed Black Americans killed by police saw a modest increase in coverage, from 50.7 percent  to 59.7 percent. Descriptive findings suggest BLM shifted media attention from that of controlling images around Black criminality to unjust policing against Black victims.</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="st">Second, individual armed status influences whether Black policing victims receive media attention during active periods of BLM protests. Non-armed Black Americans compared to armed Black Americans receive over twice as many daily print media articles, and local BLM protests partially mediate this effect. Even though BLM shifted coverage of police killings as emblematic of unjust police brutality, past media narratives that associated Black Americans with criminality and public threats to social order continued to remain influential in shaping attention (Beckett and Sasson 2004; Hirschfield and Simon 2010). </span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="st">Third, local and national BLM protests successfully directed media attention to Black Americans killed by police. While previous studies assess the indirect effects of movements in shifting discourses around social issues (Gaby and Caren 2016; Lee, Weitzer, and Martínez 2018; Mourão, Brown, and Sylvie 2021; Simmons 2017), I find that BLM protests directly channel media attention. Each additional local protest doubles daily media attention to nearby police killings. Although consistent with previous studies, neither favorable political contexts nor the presence of anti-police brutality organizations impact media attention to police killings. Unlike professional movements that rely on institutional channels and issue reputation to garner attention (Rohlinger 2014; Ryan, Anastario, and Jeffreys 2005), movements like BLM rooted in grassroots organizing (Taylor 2016) may rely more directly on protests.</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="st">Fourth, individual armed status also moderates the capacity of local BLM protests to direct daily media attention to police killings. While protests direct attention to all nearby Black policing deaths, each additional local BLM protest garners 2.83 times more daily media articles among non-armed individuals compared to only 1.57 times more among armed individuals. Differential effects of BLM protests indicate the controlling image of “armed Black criminal” (Beckett and Sasson 2004; Carlson 2018, 2019; Russell-Brown 1998) is consequential in shaping movement outcomes on attention. Controlling images moderate protest effects in ways that render some victims more newsworthy than  others. My findings underscore the need for scholars to account for how controlling images influence the trajectory, outcome, and repression of marginalized groups’ political advocacy and movement activity.  </span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="st">Results in this study carry implications for understanding the disruptive capacity of protests to direct media attention. Amenta et al. (2019) propose an institutional mediation model by which media coverage of movements is conditioned by dynamically interacting institutions of media norms, political contexts, and movement infrastructure. Building on this model, movement and media scholars should account for how cultural resonance of movement claims factors into media coverage, particularly for movements structured along a matrix of domination (Collins 1999). For instance, BLM leaders confront the controlling images of Black criminality and racialized threat (Beckett and Sasson 2004; Brown and Harlow 2019; Russell-Brown 1998; Phelps and Hamilton 2022). Media outlets are sensitive to the potential armed threat of Black Americans killed by police in ways that moderate whether BLM protests direct media attention. This implies that as journalists and editors scrutinize the “reasonableness” of police brutality claims amidst BLM protests (Gans 1979; Sobieraj 2010; Valentim 2019), they selectively cover non-armed Black Americans emblematic of unjust policing rather than, as BLM activists do, contest the victimhood of armed Black Americans whose imagery evoke racialized threats. These are consistent with Brown and Harlow’s (2019) findings that the media disproportionately disparage Black-led and indigenous rights movements to others. Building on scholarship of media coverage of minority-led movements (Davenport 2009), future research should investigate how readers and journalists adjudicate between moral claims asserted by ethno-racial minorities and the controlling images imposed by authority figures.</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="st">Future research should investigate the impacts of BLM on media beyond the quantities of protests and media articles. Consistent with previous studies (Lee, Weitzer, and Martínez 2018; Mourão, Brown, and Sylvie 2021; Simmons 2017), I find that BLM’s discursive power elevated media attention and local BLM protests directly channeled attention to nearby police killings. Given that movement activists and authority figures seek to influence media frames of ethno-racial minorities (DalCortivo and Oursler 2021; Luna 2018), scholars should investigate how media frames of police killings changed or persisted during BLM’s trajectory. Of particular interest are the ways media construct Black criminality or Black victimhood and the ways BLM protests factor into framing these constructions. Given that BLM protests also channeled media attention to armed Black Americans, qualitative analyses of the themes, tone, and content of these news articles may provide further insights into how BLM protests influence news coverage despite controlling images. Media narratives may leverage BLM protests to contest the moral worthiness of armed individuals, but these circumstances can also lead media framing to extend Black criminality to delegitimize BLM protesters. Coverage may also differ across national and local media contexts. Finally, scholars should explore how additional protest dimensions, including the event size, organizational affiliations, the presence of arrests or counter- demonstrations, and issue-attention contexts influence media attention (Andrews and Caren 2010; McCarthy, McPhail, and Smith 1996; Oliver and Meyer 1999; Wouters and Lefevere 2023). Content and narrative analysis of media coverage of police killings will elucidate the contexts in which movements and media leverage and deploy criminality and victimhood frames. </span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="st">Media scholars should further account for the different processes by which movements impact media coverage, including discursive rupture (Gaby and Caren 2016), reliance on institutional channels (Rohlinger 2014; Ryan, Anastario, and Jeffreys 2005), or protests that direct media attention. Findings indicate neither political contexts nor organizational presence influences media attention to police killings for BLM, which goes against expectations in prevailing scholarship (Amenta et al. 2019; Andrews and Caren 2010). Potentially, grassroots organizations (Taylor 2016) and spontaneous mobilizations (Snow and Moss 2014), both of which characterize BLM, may rely more on the agenda-setting power of protests. Accounting for the agency of BLM activists also provides crucial insights into how protesters strategize to direct media attention. Ethnographies and qualitative interviews reveal that BLM activists strategically organize to protect themselves from police violence (Cobbina et al. 2019; Haimson 2020) and leverage intersectional and abolitionist framing to challenge ideologically antagonistic contexts (Phelps, Ward, and Frazier 2021; Simpson, Walter, and Ebert 2021). Future comparative and longitudinal analyses would help to explore the dynamics of protests and media coverage. </span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="st">Given how armed status moderates the capacity of BLM protests to direct media attention, scholars should interrogate how controlling images influences the organizing and claims-making of Black-led social movements. Scholars should consider that police spokespeople may initially lie about the armed status of those killed by invoking public threat frames immediately after police killings.  Activists must then expend moral and material resources contesting these claims. Consequently, the cultural impact of controlling images may be larger than I account for in my study. While theorizing the gendered dimension of Black criminality is beyond the scope of my paper, scholars should also account for how racialized discourses around “good guys” versus “bad guys” with guns are embedded in the politics of masculinity (Carlson 2018, 2019; Stroud 2016). Additionally, scholars need to take seriously how a small group of legally armed Black men’s actions to monitor police actions in Oakland’s Black working-class neighborhoods compelled then California Governor Ronald Reagan, no darling to government regulations, to pass comprehensive gun restrictions (Bloom and Martin 2013). Future research should interrogate racialized, gendered, and class-based controlling images around the purported armed threat of marginalized groups.</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="st">Scholarship on controlling images provides a generative framework for movement scholars to assess the trajectory and outcomes of social movements organized along social hierarchies. Controlling images highlight one of many cultural mechanisms by which dominant groups suppress and erase the collective struggles of marginalized groups (Collins 1999). Although not in their chosen circumstances, activists re-shape moral claims and political organizing to account for anticipated controlling images (Cole 2006; García 2022; Patler 2018). Some Black leaders selectively employ respectability politics to garner moral sympathy among white audiences, but they also marginalize sub-populations along other identities (Cohen 1999; Higginbotham 1994). Silvan Niedermeier (2016) finds during the 1930s-40s campaigns against lynching, torture, and forced confessions that the NAACP only defended clients that lawyers and local community activists vetted as unambiguously innocent. Other leaders, such as those in BLM, center the most marginalized identities to fight for all Black lives (Garza 2014; Taylor 2016). </span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="st">Scholars can use several generative lines of inquiry to bring controlling images into social movements. For instance, what factors determine whether movement activists center their most privileged or marginalized voices, and what are the consequences of these decisions? Scholars of prefigurative politics underscore inclusive and participatory movement practices (Polletta 2002), but movement spaces can also reproduce social hierarchies (Hughey 2015), and centering certain marginalized identities over others can promote elite capture (Táíwò 2022). How may distinct manifestations of controlling images shape how different marginalized movements organize? Asian Americans confront controlling images of apolitical and passive political subjects (Wong et al. 2011), while Latino Americans confront controlling images of the “illegal alien” (Ngai 2014) or social conservatism (García 2022). These lead activists to take up different moral claims and organizing models. Additionally, scholars should consider how controlling images operate across different cultural fields (Mathieu 2021) and how movement challenges in one field may spill over to generate social change across others (Armstrong and Bernstein 2008). For instance, BLM’s discursive power against Black criminality in the journalistic field also contested controlling images and compelled discursive and policy changes in criminal justice and policing practices. Finally, movement repression scholarship can incorporate how controlling images factor into the ways social movements, based on their positionality along a matrix of domination, resist distinct forms of marginalization (Davenport 2009; Earl 2011). Future research should aim to offer insights into the ethno-racial dimensions of social movements (Bracey 2021; Morris 2019; Oliver 2017).</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="st">Media attention is vital for social movements to direct political debate and shape policy. Nonetheless, movements led by ethno-racial minorities confront controlling images in media narratives that delegitimize their claims. Black Lives Matter protests successfully directed media attention to Black Americans killed by police. Still, activists’ efforts had also been undermined by the persistence of controlling images that associate Blackness with criminality and racialized armed threats. Challenging controlling images remains at the center of the collective struggle for Black lives and will continue to shape Black resistance to state violence. Black movements matter, but when they matter can be beyond their control and under the purview of whether their claims conditionally converge with acceptable yet fickle norms of injustice.</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-7" class="cell" data-execution_count="84">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>introduction  <span class="op">=</span> <span class="st">'''</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="st">Controlling images factor into media attention to Black individuals killed by police. While previous operationalizations typically analyze in qualitative studies narratives that reflect or challenge racialized and gendered tropes (Collins 1999; Dow 2016; García 2022), victim-armed status represents a quantitative measure that captures perceived victim worthiness. Public discourse on police-related deaths relies on the purported public threat that individuals pose to law enforcement, particularly around possession of a weapon, to justify or criticize police brutality cases (Freelon, McIlwain, and Clark 2016; Hirschfield and Simon 2010). Media coverage of police killings also tends to portray Black men as criminals and thugs whose existence is a threat to public order (Beckett and Sasson 2004; Oliver 1994; Russell-Brown 1998). The perceived public threat of Black Americans is underscored in studies in which police and public officials frame Black gun owners as presumedly dangerous and white gun owners as citizen-protectors (Carlson 2018, 2019; Stroud 2016). Prior studies employing quantitative measures of controlling images underscore that the mere presence of Black men in civilian-police interactions escalates the chance of police violence (Remster, Smith, and Kramer 2022). While the controlling image of an “armed Black criminal” is widely studied and challenged among scholars, few have empirically tested its impact on movement outcomes.</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="st">Using negative binomial regression, I analyze a novel dataset of daily media coverage of 678 armed and non-armed  Black Americans killed by police between 2014 and 2016 in over 300  U.S. print media to explore the newsworthiness of Black policing deaths and assess Black Lives Matter (BLM) protests’ capacity to direct media. Findings reveal that BLM significantly shifted media attention towards non-armed Black Americans killed by police after the 2014 Ferguson protests. While previous media attention tended to cover armed Black Americans, BLM expanded media attention significantly to non-armed Black Americans. I also find that local BLM protests increased daily media attention to nearby armed and non-armed Black Americans. However protests drew almost twice as many media articles for non-armed Black Americans compared to armed Black Americans. Controlling images around Black criminality and racialized threat prevalent in media narratives and policing practices (Beckett and Sasson 2004; Hirschfield and Simon 2010; Carlson 2018, 2019) continued to influence the interaction between movement activity and media attention. Differential effects of BLM protests to direct media attention by individual armed status demonstrate the extent to which controlling images render some victims more newsworthy than others despite BLM activists’ efforts to re-claim Black victimhood from policing and the carceral state. Neither the presence of local anti-police brutality organizations nor favorable political opportunities influenced media attention to policing killings, suggesting movements like BLM rooted in grassroots organizing (Taylor 2016) rely more on protests than accounted for in institutional mediation models (Amenta et al. 2019). My findings carry important theoretical implications to account for the ways controlling images and racialized threat influence the trajectory, outcome, and repression of social movements. </span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-8" class="cell" data-execution_count="98">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>theory <span class="op">=</span> <span class="st">'''</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="st">Media attention amplifies movement concerns, legitimizes grievances, and exerts pressure on politicians (Gamson and Wolfsfeld 1993; Koopmans 2004). Disruptive and conflict-ridden protests garner more attention (McCarthy, McPhail, and Smith 1996; Oliver and Meyer 1999), but that coverage focuses on episodic event characteristics rather than social issues (Gitlin 1980). Protests’ efficacy in directing media attention largely depends on institutional convergence of media norms, political contexts, and movement organizations (Amenta and Caren 2022). Media attention is often conditional on media proximity to events, journalistic professional norms, and activities in the issue-attention cycle (Gans 1979; Rafail, McCarthy, and Sullivan 2019; Seguin 2016; Wouters and Lefevere 2023). The presence (or lack thereof) of favorable political opportunities shapes whether movements can direct media attention (Amenta et al. 2009). Political allies signal the legitimacy of movement claims and the possibility of political change (Amenta et al. 2019), and policy debates facilitate assertive political actions to generate attention (Amenta and Caren 2022). Within these channels, mainstream organizations can obtain media attention through institutionalized actions (Andrews and Caren 2010) or their reputation as legitimately recognized actors on certain policy issues (Rohlinger 2014; Ryan, Anastario, and Jeffreys 2005). Organizations perceived as radical can still obtain attention but face unpredictable coverage (Evans 2016; Seguin 2016). These contexts moderate protests’ ability to direct media attention. </span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="st">While movement scholars highlight that media norms, political contexts, and movement infrastructure shape media attention, scholars have not adequately accounted for whether the cultural and ideological barriers confronted by movements led by ethno-racial minorities also factor into the extent to which protests impact attention. U.S. minority-led movements mobilize in largely white cultural contexts (Bracey 2016; Morris 2019) and must align their claims with the cultural and moral values of white audiences, journalists, and decision-makers (Oliver 2017; Snow and Benford 1988). Liberal and conservative audiences are more likely to associate Black protesters with violence (Nicholson and Valentino 2021), and U.S. anti-racist protests compared to others are more likely to see police arrest and deploy chemical agents against protesters (Dorff, Adcox, and Konet 2023). Media coverage of ethno-racial minorities typically ignores disproportionate impacts, decenter structural problems of racism, and frame social problems through poverty, criminality, and social irresponsibility (Carlson 2016; Gilens 1996; Jacobs 2000). Danielle Brown and Summer Harlow (2019) find media coverage is more disparaging of Black and indigenous rights movements compared to others. Minority-led movements confront perceptions that conflate whiteness with authority and objectivity (Hughey 2015), which grants less standing to Black community leaders compared to U.S. police and politicians (Jacobs 2000). Movements led by ethno-racial minorities confront cultural barriers not accounted for in existing media studies. </span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="st">Drawing upon scholarship on controlling images, I argue that the capacity of protests to influence media attention is moderated by the perceived worthiness of movement claims. Violations of societal norms provide opportunities for attention (Alexander 2019; Cohen 1976; Lazarsfeld and Merton 1948) and for media to demarcate acceptable boundaries of public debates on social issues (Blumler and Gurevitch 1995; McCombs and Shaw 1972). While news production allows movements to influence media (Gamson and Wolfsfeld 1993), gatekeeping generates selective coverage depending on whether editors and journalists perceive certain movements as newsworthy and legitimate (Gans 1979; Sobieraj 2010; Valentim 2019). I focus on one such mechanism for selective coverage: the racialized and gendered controlling images  that associate Black men with criminality and public threats (Collins 1999; Oliver 1994; Russell-Brown 1998; Stroud 2016). Whether BLM directs media attention to those killed by police may be sensitive to the armed threat of Black criminality prevalent in media discourse. BLM activists confront controlling images that normalize police brutality against Black Americans as morally acceptable and, hence, no longer newsworthy. </span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="st">Scholarship on controlling images draws from intersectional approaches (Crenshaw 1991) to conceptualize how marginalized groups resist a matrix of domination across nationality, race and ethnicity, gender, class, and other identities (Collins 1999). Controlling images are negative representations embedded in institutional practices to constrain marginalized groups, reinforce existing hierarchies, and normalize oppression. Controlling images render individuals into “otherized” collectivities to “make racism, sexism, poverty, and other forms of social injustice appear to be natural, normal, and inevitable parts of everyday life” (Collins 1999: 69). Controlling images challenge movement leaders from marginalized backgrounds by shaping the extent their claims become resonant and newsworthy to journalists along dimensions of empirical credibility, experiential commensurability, and narrative fidelity (Snow and Benford 1988). Cultural resonance depends on whether marginalized communities can successfully overcome controlling images imposed on their social positions (García 2022; Kubal 1998). </span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="st">Applying controlling images to American policing reveals a deep cultural association of Blackness with criminality (Collins 1999; Oliver 1994). Katheryn Russell-Brown (1998) coins the term criminalblackman as emblematic of institutional surveillance of Black men that presupposes deviancy and criminality. Controlling images around policing also oppress Black women through guilt by association alongside Black men (Remster, Smith, and Kramer 2022) and as targets of sexual harassment and accusations of theft (e.g., “jezebel” or “welfare queen”) (Collins 1999). Media depictions of police killings impose controlling images of threatening criminals to justify police brutality (Beckett and Sasson 2004; Hirschfield and Simon 2010). Black mothers impart in “the talk” survival strategies for Black boys and girls to distinguish themselves from controlling images in police interactions (Dow 2016; Malone Gonzalez 2022). U.S. Black-led movements also strategically employ respectability politics to garner sympathy from white elites (Higginbotham 1994; Niedermeier 2016). Despite serving as cultural sites of resistance, the implications of controlling images on social movement outcomes have not been widely studied. </span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="st">Victim armed status influences the newsworthiness of Black individuals killed by police. BLM activists attempt to elevate Black individuals as police brutality victims rather than controlling images that evoke armed Black criminality. Given prevalent journalistic norms in assessing the “reasonableness” of social events to determine their newsworthiness (Gans 1979; Sobieraj 2010; Valentim 2019), whether or not the person killed by police had been armed or not armed with a weapon represents one of many factors  by which media determine whether those killed by police “deserved” police violence or are “worthy” of public outrage (Freelon, McIlwain, and Clark 2016; Hirschfield and Simon 2010). The Ferguson protests in August 2014 shifted societal norms around policing, and BLM activists humanized Black individuals of police brutality. Yet, shifting societal norms and activist efforts alone do not dispel cultural practices and ideological work around racial discourse (Hall 1990). In the issue-attention cycle of BLM protests around Black Americans killed by police, the media may selectively draw boundaries of attention to non-armed Black Americans compared to armed Black Americans. Hypothesis 1: Armed Black Americans killed by police will receive less media attention compared to non-armed Black Americans killed by police. </span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="st">While BLM shifted media discourse around policing, little research has tested whether BLM protests directed media attention. News media after the 2014 Ferguson protests framed the deaths of high-profile Black men as emblematic of police misconduct and racism (Lee, Weitzer, and Martínez 2018; Mourão, Brown, and Sylvie 2021). Studies also find elevated attention to unarmed Black Americans after the Ferguson protests (Simmons 2017; Zuckerman et al. 2019). Discourse against police brutality also proliferated in social media (Bonilla and Rosa 2015; Freelon, McIlwain, and Clark 2016). While previous findings align with scholarly expectations, whether BLM protests directly amplified media attention to Black policing deaths has not been adequately tested. Hypothesis 2: Greater volume of BLM protests will increase media attention to non-armed and armed Black Americans killed by police. </span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="st">Finally, I test whether the controlling image of the “armed Black criminal” moderated the impact of BLM protests to direct media attention to policing victims. In the post-Ferguson era, BLM activists organized protests in the aftermath of killings around armed and non-armed Black Americans to urge potential de-escalation scenarios and uphold transparency in investigations.  Shifting media scrutiny of policing, however, does not mean that media actors treat all protests equally. The controlling image of an “armed Black criminal” thus may challenge the narrative fidelity and empirical credibility of victim-worthiness claims promoted in BLM protests. Individuals killed while non-armed are more likely to receive attention amidst BLM protests because the circumstances of their deaths align more closely with activist claims of unjust policing practices (Simmons 2017; Zuckerman et al. 2019) and violations of societal norms of proper police conduct (Lee, Weitzer, and Martínez 2018). In contrast, those killed while armed with a dangerous weapon are less likely to receive attention because their death evokes to media “appropriate” police conduct in reaction to the racialized threat of an “armed Black criminal” (Beckett and Sasson 2004; Russell-Brown 1998; Hirschfield and Simon 2010). </span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="st">Controlling images influence strategies and outcomes of ethno-racial minority movements (Cole 2006; García 2022; Patler 2018). Historically, U.S. Black-led social movements in the service of liberating Black peoples from oppression responded by distancing from or explicitly challenging images of armed Black criminality. The NAACP selectively avoided defending Black clients whose innocence was unclear for anti-lynching and anti-torture cases in the 1930s-40s (Niedermeier 2016). Many Black leaders explicitly leveraged non-violent principles in the 1960s U.S. Southern Civil Rights Movement to build moral sympathy and political alliances in dismantling Jim Crow (Marable 1984). Others in Black Nationalist movements, most notably the U.S. Black Panther Party, explicitly justified armed self-defense against police brutality and extrajudicial white violence as a strategy to strengthen Black communities’ political autonomy from white-led U.S. state institutions (Bloom and Martin 2013; Williams 1998). Controlling images has continued to influence contemporary BLM leaders, who reject respectability politics to assert all Black lives matter (Garza 2014; Taylor 2016). Moral resistances to controlling images not only represent reformative measures to institutionalized injustice within legal systems (Galanter 1974) but also challenges the subaltern effect of hegemonic narratives that position protests organized by African-descended peoples as merely struggles for formal inclusion within Western polities (Spivak 1988). While controlling images condition how ethno-racial minority- led movements influence cultural and moral arenas, the empirical effect of controlling images on movement outcomes in media has yet to be tested. Hypothesis 3: The effect of BLM protests on media attention to Black Americans killed by police is moderated by the armed status of those killed by police. </span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-9" class="cell" data-execution_count="101">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>methods <span class="op">=</span> <span class="st">'''</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="st">Using negative binomial regression, I evaluate to what extent controlling images around armed Black criminality influence media attention to police killings and moderate the capacity of BLM protests to direct media attention. I compile a novel dataset from multiple sources. Data include BLM protests between July 1 2014, and December 31,  2016; characteristics of Black Americans killed by U.S. police; local anti-police brutality organizations in the Movement for Black Lives; coverage of Black Americans killed by police in over 300  newspapers, magazines, and trade journals; and county-level demographic data from the 2010 Census. The unit of analysis is an individualday of print media attention for Black Americans killed by police from July 1, 2014 to December 31, 2016 I choose this period due to data availability for BLM protests. Table 1 presents this period’s descriptive statistics of Black Americans killed by police. Nearly 60</span><span class="sc">% r</span><span class="st">eceived media attention through print news in the two weeks following their death, and nearly three in ten were non-armed in their interaction with police. </span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="st">Table 1. Descriptive Statistics of Black Americans Killed by Policy (July 14-December 2016)</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="st">Dependent Variable</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="st">My dependent variable is the number of print media articles per day that mention a person killed by police. I focus on media attention within two weeks after each person’s death.  The immediate aftermath of police killings presents an opportune moment for BLM protests to direct attention. Although released video footage or judicial rulings also increase media attention, most media attention occurs immediately after police killings. I analyzed 678 Black Americans killed by police between July 1,, 2014, and December 31, 2016, across 10,170 individual days in over 300  newspapers, magazines, and trade journals.  </span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="st">I gathered coverage of each Black American killed by law enforcement from electronic full-text searches on the US News Stream Database maintained by ProQuest, which features U.S. news coverage since 1980. Online databases reduce selection bias by gathering wider news sources (Earl et al. 2004). I focus on national and local newspapers, magazines, and trade journals because print media occupies agenda-setting legitimacy for political decision-makers and the public. I search for articles containing each person’s full name, the city in which the person was killed, and mentions of “police” or “law enforcement.” This final query leans more conservatively to reduce false positives. I remove duplications of articles printed on the same days and outlets. Because government sources systematically undercount people killed by police (Fyfe 2002), data come from Mapping Police Violence (MPV), a crowdsourced database of police killings managed by activists and data scientists. Crowdsourced databases are the “gold standard” for examining police killings because they compile data from multiple government sources and public records (Campbell, Nix, and Maguire 2018).</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="st">Independent Variables</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="st">Table 2 displays the descriptive statistics of individual-day variables used in the main analysis. I employ two measurements of BLM protests because protest proximity drives media attention (Oliver and Meyer 1999; Rafail, McCarthy, and Sullivan 2019). These include the rolling sums of the number of local BLM protests in the past week and the number of BLM protests in the U.S. in the past week for each day of coverage. I code protests as local if they occur in the same Designated Media Area (DMA) of police killings. DMAs by Nielsen Media Research refer to media markets where similar broadcast and print media are sold to consumers. They are a standard unit of analysis in media studies to sample television, radio, and newspapers (Long et al. 2005). I link all variables to DMAs using county-level crosswalk files. Following prior studies (Williamson, Trump, and Einstein 2018), BLM protest data come from the Elephrame database, which verifies protests with news reports and social media posts (https://elephrame.com/textbook/BLM/chart).  Following prior studies, I employ the number of events rather than protest size because media attention is more strongly driven by events than size (Oliver, Hanna, and Lim 2023). Replicating models with the size of protests yielded coefficients in the same direction as protest events. </span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="st">To operationalize controlling images, I use a binary measure of individual armed status when killed by police. It is coded in MPV as one if the person was equipped with a weapon, including a knife, bat, or gun, and coded zero otherwise. While previous operationalizations of controlling images typically employ tropes or narratives that marginalize social groups along a matrix of domination (Collins 1999; Dow 2016; García 2022), I employ a quantitative measure of armed status to operationalize the perceived worthiness of Black individuals killed by police. Prior empirical studies similarly employ quantitative measures of controlling images (Remster, Smith, and Kramer 2022). Prior theoretical works underscore public threat perceptions generated by media depictions of Black Americans as criminals or thugs (Beckett and Sasson 2004; Oliver 1994; Russell-Brown 1998) and racialized double standards that legally armed Black gun owners are potential dangers, but white gun owners are citizen-protecters (Carlson 2018, 2019; Stroud 2016). Building on prior empirical and theoretical scholarship, individual armed status captures whether Black individuals embody characteristics that denote victim worthiness or public threats. </span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="st">Controls</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="st">Data on person-level controls come from MPV. Since officer behavior also affects media coverage, I control for cause of death. I also control the person’s gender and age. Gender represents a binary variable, with men treated as the reference category.  Age is a continuous variable. I also control for political opportunities and local presence of anti-police brutality organizations. Previous studies operationalized political opportunities through Democratic party support for left-leaning movements (Amenta et al. 2009) and Black political leaders for Black-led movements due to linked fate (Stout, Coulter, and Edwards 2017). I employ two measurements of political opportunities: the ratio of Congressional House Representatives representing each DMA whose positions are filled by Democrats and the ratio of Congressional House Representatives in each DMA who self-define as African American in the U.S. Congress Biographical Directory.  Measures are adjusted across election cycles. </span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="st">From social media pages and organization websites, I use a binary measure of whether a local anti-police brutality organization with the Movement for Black Lives (M4BL) was active in the same DMA as policing deaths. M4BL represents a country-wide coalition of racial justice organizations mobilizing against police brutality and for the broader collective struggle for Black liberation (Blackwell 2015). This accounts for whether local organizational reputation impacted media attention to local policing deaths (Ryan, Anastario, and Jeffreys 2005).</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="st">DMA-level population size and percentages of non-Hispanic Black residents come from the 2010 Decennial Census. Past week counts of local and national police killings come from MPV to account for if frequency of police killings impacts attention. I account for the size of media markets through the number of newspapers in each DMA. I account for local political climate using the ratio of voters in each DMA who voted for the Democratic candidate Obama in the 2012 Presidential election. I control for regional differences across four U.S. Census regions. I control for the year and the number of days after each person’s death. Controlling for year eliminates unmeasured confounding period effects, while controlling for days after death accounts for the natural cycle of media attention, which decreases over time. </span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="st">Analytic Strategy</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="st">I employ negative binomial regression on daily print media articles that mention Black Americans killed by police in the first two weeks of their death. Negative binomial regression accounts for overdispersion in my dependent variable (Long and Freese 2003). I employ multi-way clustered standard errors to account for errors nested in individuals and DMAs (Cameron and Miller 2015). I present descriptive statistics of police killings and media attention between 2013 and 2016, and I depict negative binomial models to assess the impacts of BLM protests and controlling images on media attention. I graph marginal effects to evaluate if armed status moderated the capacity of protests to direct media attention. Finally, I employ additional tests to ensure my findings are robust to alternative explanations. </span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-10" class="cell" data-execution_count="104">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>findings <span class="op">=</span> <span class="st">'''</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="st">Descriptive Analysis</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="st">To what extent did BLM influence media attention to Black Americans killed by police? Figure 1 displays the monthly count of 1,074 police killings of Black Americans by their armed status between January 1, 2013, and December 31, 2016. Among those with known armed status, around 26% were non-armed. Figure 2 displays the daily count of articles published in newspapers, magazines, and trade journals that mention Black Americans killed by police in the same period. BLM elevated media attention to police killings of Black Americans after the 2014 Ferguson protests. Movement activity coincided with an increased number of police killings of non-armed Black Americans between August 2014 and July 2015. Most media attention focused on non-armed Black Americans, although there was elevated coverage of armed Black Americans. Media attention was also episodic. Attention was largely driven by high-profile cases of Michael Brown’s death (August 2014), the non-indictments of officers who had killed Eric Garner and Michael Brown (November-December 2014), and the Baltimore protests following Freddie Gray’s death (April-May 2015). Coverage in July 2016 featured the heart-breaking three-day saga of police shootings of Alton Sterling (non-armed) and Philando Castile (armed), and Micah Johnson’s (armed) killing of five Dallas police officers.</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="st">Figure 1. Monthly Police Killings of Black Americans by Armed Status (2013-2016)</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="st"> </span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="st">Figure 2. Daily Print Media Articles on Police Killings of Black Americans by Armed Status (2013-2016)</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="st"> </span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="st">To better account for how BLM shifted media attention before and after the Ferguson protests, I display in table 3  the quantity of media attention to Black Americans within two weeks of their death from the beginning of 2013 to the Ferguson protests and after the Ferguson protests until the end of 2016. Before the Ferguson protests, media outlets were more likely to cover armed Black Americans rather than non-armed Black Americans, thereby reflecting media selection for controlling images of “armed Black criminals.” After the August 2014 Ferguson protests, media outlets became more likely to publish stories about non-armed Black Americans killed by police. Non-armed Black Americans became more likely to be covered after the Ferguson protests (59.0</span><span class="sc">% c</span><span class="st">ompared to 41.3%, p&lt;0.01) and received a greater quantity of attention (44.3 articles per person compared to 4.6 articles, p&lt;0.05). Interestingly, armed Black Americans also became more likely to be covered after the Ferguson protests (59.7</span><span class="sc">% c</span><span class="st">ompared to 50.6%, p&lt;0.05), but these did not extend to more articles per person (13.2 compared to 4.2, p&lt;0.1). Descriptive findings demonstrate BLM’s discursive power in shaping media coverage of Black Americans killed by police after the Ferguson protests. The disproportionate impact for non-armed Black Americans suggests that BLM shifted media attention from that of controlling images of armed Black criminality to unjust police violence against non-armed Black victims. These findings are consistent with prior works that find BLM discursively challenged mainstream media narratives of police killings (Bonilla and Rosa 2015; Freelon, McIlwain, and Clark  2016). While broadly consistent with expectations regarding controlling images and media attention, regression analyses are needed to test whether BLM protests directly impacted media attention and whether this effect is moderated by armed status. </span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="st">Table 3. Media Attention to Black Americans Killed by Police Before and After 2014 Ferguson </span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="st">Protests</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="st">Notes: Media attention aggregates two weeks after each person’s death. Welch Two Sample T-tests are employed to assess statistical significance. +p&lt;0.1; *p&lt;0.05; **p&lt;0.01; ***p&lt;0.001</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="st">Negative Binomial Regression Analysis</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="st">Table 4 depicts four negative binomial models that regress the daily media attention to Black Americans killed by police on personal characteristics, movement-related variables, and separate models including and excluding interaction of armed status and BLM protests. Coefficients are displayed as incidence rate ratios with standard errors in log counts. All models include control variables, which are removed in the presentation for parsimony. Access to full models and other appendices are in an online supplemental document (https://osf.io/vxd8a/).</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="st">Table 4. Negative Binomial Regression: Effects on Daily Media Attention to Black Americans Killed by Police</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a><span class="st">Notes: Coefficients are displayed as incidence ratios and standard errors reported in log counts. Standard errors are robust to multi-way clusters in individuals and DMAs. Reference group is Male, armed, killed with a gunshot, and killed in the Northeast United States. Control variables removed for parsimony. Full table is in Appendix H in the online supplemental document. + p&lt;0.1; * p&lt;0.05; ** p&lt;0.01; *** p&lt;0.001</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a><span class="st">Consistent with expectations, armed status shapes media attention to police killings but is mediated in part by local BLM protests. In model one, non-armed Black Americans, compared to armed individuals, receive over five times more daily media articles (p&lt;0.001). The coefficient attenuates but remains significant when controlling for movement factors and interaction effects (β ̂ = 1.96, p&lt;0.05). I test for mediation using a counterfactual-outcome framework suitable for zero-inflated outcomes (Cheng et al. 2018)  . Table 5 indicates local BLM protests mediate 24</span><span class="sc">% o</span><span class="st">f the total effect of armed status on daily media attention. Protest mediation also seems to be stronger among non-armed Black Americans at 32</span><span class="sc">% c</span><span class="st">ompared to armed Black Americans at 15% (p&lt;0.001). Results support the first hypothesis, but local BLM protests partially mediate differences in attention to armed and non-armed Black Americans. </span></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a><span class="st">Table 5. Mediation Analysis of Armed Status and BLM Protests on Media Attention</span></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a><span class="st">Additionally, I test whether BLM protests influence media attention to Black Americans killed by police. Model three indicates that local BLM protests (β ̂ = 2.23, p&lt;0.001) and national BLM protests (β ̂ = 1.03, p&lt;0.001) are positively associated with daily media attention. Each increase in the standard deviation of local BLM protests in the past week (around one protest) is associated with 2.23 times more daily media articles per person. Each increase in standard deviation of country-wide BLM protests in the past week (around twenty protests) is associated with 1.81 times more daily media articles per person. Results support the second hypothesis. </span></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a><span class="st">Finally, I test in model four whether armed status moderates the impact of BLM protests on media attention. Among armed Black Americans killed by police, each local BLM protest in the past week is associated with 1.57 times more daily media articles (p&lt;0.001). Non-armed Black Americans saw an additional increase by a factor of 1.80 (p&lt;0.001) for a total effect of 2.83 times more daily media articles. Moderation does not extend to country-wide BLM protests. I graph marginal effects to evaluate moderation because interaction coefficients alone cannot interpret nonlinear regression models (Long and Mustillo 2021). Figure 3 displays non-overlapping 95</span><span class="sc">% c</span><span class="st">onfidence intervals across low-to-high protest counts. As protests increase, the marginal effect on media attention between non-armed and armed Black Americans also grows. Three local BLM protests in the past week indicate that non-armed Black Americans are expected to receive, on average, 8.35 [95% CI: 4.96, 14.07] media articles per day, and armed Black Americans are expected to receive 0.78 [95% CI: 0.47, 1.29]. Perceived worthiness of movement claims moderates BLM protests. Police-civilian interactions that align more with “armed Black criminal” controlling images dampen the capacity of local protests to direct media attention compared to non-armed police victims whose circumstances align more with unjust police brutality claims. Results support the third hypothesis for local BLM protests. </span></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a><span class="st">Figure 3. Marginal Effects of Local BLM Protests by Armed Status on Media Attention to Black Americans Killed by Police </span></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a><span class="st"> </span></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a><span class="st">Notes: Shaded areas represent 95</span><span class="sc">% c</span><span class="st">onfidence intervals. Marginal effects account for control variables present in table 4. </span></span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a><span class="st">While movement and media scholars posit the importance of movement organizations and favorable political opportunities in garnering media attention, these do not extend to BLM’s impact on media attention to police killings. Across all models, neither the presence of local M4BL organizations  nor changes to local representation of Democratic or Black Congressional Representatives have statistically significant associations with media attention. Findings suggest that BLM protests directed media attention to police killings. In summary, results support the expectation that controlling images influence the media outcomes of social movements. Even though local BLM protests garnered media attention to nearby police killings, the impact of local protests varied by the armed status of those killed by police. Local BLM protests matter more for non-armed Black Americans compared to armed Black Americans. </span></span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a><span class="st">Assessing Alternative Explanation and Robustness Checks</span></span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a><span class="st"> I anticipate the possibility that rather than controlling images, results may be driven by societal shifts in morally acceptable norms around policing. This alternative explanation purports what drove differential coverage between armed and non-armed Black Americans is greater media recognition that non-armed policing deaths represent stronger violations of societal norms rather than moral boundaries imposed by controlling images that leverage armed Black criminality against BLM’s attempts to humanize Black victims of police violence. I test for whether there is elevated media scrutiny of police killings of individuals from all ethno-racial backgrounds rather than only Black Americans, as controlling images would suggest. Although these mechanisms are not inconsistent with one another, as controlling images factor into morally acceptable norms, I test for the effects of the impacts of armed status, BLM protests, and their interaction on media attention to both Black and Non-Black Americans killed by police.  Findings that point to similar coefficient estimates of armed status and BLM protests between Black and non-Black Americans would indicate societal shifts around morally acceptable norms of policing. Findings that point to different coefficient estimates between Black and non-Black Americans would indicate that controlling images, which center Black movements’ moral contestation against Black criminality for Black humanization, shapes media attention.</span></span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a><span class="st">Figure 4 displays the marginal effects of armed status and race on daily media attention to police killings between July 2014 and December 2016. As clearly indicated by different coefficient estimates and non-overlapping confidence intervals, media attention largely focuses on Black Americans killed by police rather than non-Black Americans. Moreover, the figure displays that among non-Black Americans, there is no statistically significant difference in media attention by armed status. Among Black Americans, armed status significantly determines whether police killings receive media attention, as indicated by non-overlapping confidence intervals. Results are largely consistent with expectations around controlling images rather than general societal shifts of acceptable norms around policing. </span></span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a><span class="st">Figure 4. Marginal Effects of Racial Differences and Armed Status on Media Attention of Police Killings</span></span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a><span class="st"> </span></span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a><span class="st">Notes: Vertical lines around point estimates represent 95</span><span class="sc">% c</span><span class="st">onfidence intervals. Marginal effects account for control variables present in Appendix B in the online supplemental.</span></span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a><span class="st">To evaluate whether racial differences extend to protests and armed status, I present in Table 6 stratified models of Black Americans and non-Black Americans to depict interaction effects of armed status and BLM protests on media attention to police killings. Consistent with expectations of controlling images, the impact of armed status on media attention extends only to Black Americans killed by police. However, there is some evidence that armed status factors into media attention to non-Black Americans; the coefficient is no longer statistically significant in model four after accounting for interaction effects of BLM protests. Among non-Black Americans, BLM protests have no statistically significant effect on media attention, and there is no evidence that BLM protests differed between armed and non-armed police killings. Graphing the marginal effects of local BLM protests and armed status among non-Black Americans, located in Appendix C in the online supplemental, supports this assessment. Appendices A-C also provide further evidence that the main results are specific to Black Americans killed by police instead of all ethno-racial groups. Results lend evidence to the mechanism of controlling images. </span></span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a><span class="st">Table 6. Negative Binomial Regression: Effects on Daily Media Attention to Black and Non-Black Americans Killed by Police </span></span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a><span class="st">Notes: Coefficients are displayed as incidence ratios and standard errors reported in log counts. Standard errors are robust to multi-way clusters in individuals and DMAs. Reference group is Male, armed, killed with a gunshot, and killed in the Northeast United States. Control variables removed for parsimony. Full table is in Appendix I in the online supplemental document + p&lt;0.1; * p&lt;0.05; ** p&lt;0.01; *** p&lt;0.001</span></span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a><span class="st">Additionally, I conducted several robustness checks to account for reverse causality, heterogeneity of media, and extreme outliers in Appendices E-G located in the online supplemental. Appendix E leads BLM protests by one and two weeks to account for reverse causality. Appendix F stratifies my original model on local and non-local daily media attention. Appendix G runs a logit model on any media coverage per day to account for extreme outliers. Appendix E indicates that protests motivate media coverage rather than coverage driving protests. Appendices F and G depict my results as largely consistent across sensitivity checks. </span></span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-11" class="cell" data-execution_count="110">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>abstract <span class="op">=</span><span class="st">'''</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="st">This study investigates how the portrayal of Black criminality influences Black Lives Matter (BLM) protests and media attention to police-related deaths of Black individuals. While prior work examined how media norms, political contexts, and movement infrastructure influence media attention, little research has questioned whether perceived worthiness of movement claims shapes the capacity of protests to direct attention. Applying scholarship of controlling images, I test how victims’  armed status moderates the effect of BLM protests on media attention to Black policing deaths. Negative binomial regression analysis on coverage of 678 Black Americans killed by police from 2014-2016 in over 300  print media indicates local protests directly increased attention to nearby Black Americans but were moderated by armed status. Neither political contexts nor organizational presence influenced attention, suggesting BLM relied on the discursive power of protests. Findings highlight how controlling images and racialized threats influence movements along a matrix of domination. </span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-12" class="cell" data-execution_count="111">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>author <span class="op">=</span> <span class="st">'''Todd Lu'''</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>title <span class="op">=</span> <span class="st">"When Black Movements Matter: Controlling Images and Black Lives Matter Protests in Media Attention to U.S. Police Killings"</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>issue_season <span class="op">=</span> <span class="st">"Winter"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-13" class="cell" data-execution_count="157">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>article <span class="op">=</span> {</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">'introduction'</span>:introduction,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'theory'</span>: theory, </span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">'methods'</span>: methods, </span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">'findings'</span>: findings,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">'author'</span>: author,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">'author_count'</span>: <span class="st">'singular'</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">'title'</span>: title,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">'issue_season'</span>: issue_season,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">'abstract'</span>: abstract,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">'conclusion'</span>:conclusion}</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>lengths <span class="op">=</span> {<span class="st">'theory'</span>: <span class="dv">300</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>           <span class="st">'conclusion'</span> : <span class="dv">100</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>           <span class="st">'methods'</span>: <span class="dv">200</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>           <span class="st">'findings'</span>: <span class="dv">500</span>, </span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>           <span class="st">'introduction'</span>: <span class="dv">100</span>,</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>          }</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>focusi <span class="op">=</span> {<span class="st">'theory'</span>: <span class="st">'Focus on using previous research to provide a foundation for understanding the research problem, situating the current study within the broader academic conversation. Avoid summmarizing the entire article. '</span>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-14" class="cell" data-execution_count="158">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> section <span class="kw">in</span> [<span class="st">'findings'</span>]:</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    word_count <span class="op">=</span> lengths[section]</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    author_count <span class="op">=</span> article[<span class="st">'author_count'</span>]</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    text <span class="op">=</span> article[section]</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    standard_system <span class="op">=</span> <span class="ss">f'''</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="ss">    This text is </span><span class="sc">{</span>section<span class="sc">}</span><span class="ss"> section in a manuscript by </span><span class="sc">{</span>author<span class="sc">}</span><span class="ss"> called "</span><span class="sc">{</span>title<span class="sc">}</span><span class="ss">".</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="ss">    Write in the first-person </span><span class="sc">{</span>author_count<span class="sc">}</span><span class="ss">. </span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="ss">    When possible, reuse the original words and phrases. Keep the tone and voice of the original text. </span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="ss">    Return ONLY the new version.</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="ss">    </span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="ss">    References: Acknowledge ONLY central authors whose work informs the discussion. </span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="ss">    The final version will be read aloud, so no text should be in parenthesis (). Instead, move to text, such as "According to McCarthy" instead of "(McCarthy 1982), but not more than two names in a sentence."</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="ss">    You will get a $500 tip if this accepted in a academic journal. </span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="ss">    '''</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>()</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>()</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    response <span class="op">=</span> client.chat.completions.create(</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>        model <span class="op">=</span> <span class="st">'gpt-4-turbo-preview'</span>,</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>        <span class="co">#model='gpt-3.5-turbo',</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> <span class="dv">1</span>,</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>        messages<span class="op">=</span>[</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>                {<span class="st">"role"</span>: <span class="st">"system"</span>, <span class="st">"content"</span>: system},</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>                {<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: <span class="ss">f''' Retain as much detail as possible while revising this </span><span class="sc">{</span>section<span class="sc">}</span><span class="ss"> section.     Avoid words overly flowerly language, like "delve," "nuance" or "exploration."</span></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a><span class="ss">The new version should be at least </span><span class="sc">{</span>word_count<span class="sc">}</span><span class="ss"> words long and written as a section of a transcript of an academic talk. SS: </span><span class="ch">\n\n</span><span class="sc">{</span>text<span class="sc">}</span><span class="ss">'''</span>},</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>                ]</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>([r.message.content <span class="cf">for</span> r <span class="kw">in</span> response.choices][<span class="dv">0</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+
+In my research, I explored the impact of the Black Lives Matter (BLM) movement on media attention towards Black Americans killed by police between 2013 and 2016. My findings reveal that post-Ferguson protests, media outlets increasingly covered non-armed Black victims of police killings, shifting from previous tendencies to focus on armed Black individuals, which often perpetuated the image of the “armed Black criminal.” This shift indicates BLM's significant influence in changing the narrative to highlight the injustice of police violence against non-armed Black victims.
+
+Analysis of media coverage before and after the Ferguson protests showed a stark difference. Before Ferguson, stories about armed Black Americans dominated. After, the coverage of non-armed Black Americans killed by police surged, both in terms of the likelihood to be covered and the amount of attention, highlighting BLM’s role in reshaping discourse.
+
+Regression analysis further detailed how BLM protests not only increased overall media attention but also influenced how armed status of victims affected coverage. Local BLM protests particularly amplified coverage of non-armed Black Americans, indicating the movement's capacity to draw media attention to cases that strongly contested mainstream narratives of Black criminality.
+
+Mediation analysis suggested BLM protests accounted for a significant portion of the effect of armed status on media attention, particularly pronounced for non-armed Black victims. This pattern persisted across local and national protests, underlining BLM's widespread impact.
+
+Additionally, the effects of armed status and BLM protests on media attention varied significantly between Black and non-Black Americans killed by police, pointing to the specific role of controlling images and the movement's challenge against these narratives. This distinction underscores the movement’s focus on contesting racially biased portrayals and advocating for the humanization of Black victims.
+
+My comprehensive examination, including checks for alternative explanations and robustness, consistently supports the significant role BLM played in redirecting and intensifying media attention towards police killings of Black Americans. This effect was particularly strong for non-armed victims, aligning with BLM's broader goals of tackling racial injustice and reforming policing practices. The evidence also suggests that while BLM shaped media attention significantly, its impact was nuanced, mediated by local protests and the armed status of victims, rather than changing political contexts or the presence of movement organizations.</code></pre>
+</div>
+</div>
+<div id="cell-15" class="cell" data-execution_count="145">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span><span class="st">'''</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="st">Adjust for Spoken Delivery: Adapt the text for auditory presentation. This includes using a conversational but professional tone, incorporating rhetorical questions if appropriate, and applying verbal emphasis on key points to aid understanding and retention. Consider how pauses and changes in intonation can be used to replace written punctuation and highlight important concepts.</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>system<span class="op">=</span> <span class="ss">f'''</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="ss">This is one section in a longer manuscript: </span><span class="sc">{</span>cite<span class="sc">}</span><span class="ss">.</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="ss">Directions for transforming written paragraphs into a more concise format:</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="ss">Condense Content: Reduce the length of each paragraph by focusing on the paragraph's main ideas. Eliminate any redundant information, detailed examples, or extensive explanations that are not crucial to the overall message. Aim to capture the essence of the paragraph in fewer words.</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="ss">Ensure Clarity and Cohesion: Make sure the condensed version flows smoothly and logically when spoken. Transitions between ideas should be clear and maintain the logical progression of the original text.</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="ss">References: Remove most citations. Acknowledge ONLY key authors whose work informs the discussion. Move names out of parentheses into the main text. </span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="ss">Continuity: Avoid repetition with earlier parts of the text. Focus on what is new in this paragraph.</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="ss">Research: Keep most research findings. It is okay to exceed the word limit if you are discussing the findings.</span></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="ss">Fidelity: When possible, reuse the original words and phrases. Keep the tone and voice of the original text.</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="ss">Review and Revise: After condensing and adapting the paragraph for spoken delivery, review it to ensure it remains true to the original's meaning and intent. Adjust as necessary for clarity, coherence, and impact.</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a><span class="ss">Return ONLY the condensed version.</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a><span class="ss">'''</span>literature review500 </span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Identify Key Points: Begin by reading each paragraph thoroughly to understand its core message and key information. This involves distinguishing between primary facts or arguments and secondary details.</span></span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> openai <span class="im">import</span> OpenAI</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>client <span class="op">=</span> OpenAI(max_retries<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> summarize(text):</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>    response <span class="op">=</span> client.chat.completions.create(</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>        model<span class="op">=</span><span class="st">"gpt-4-0125-preview"</span>,</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>        <span class="co">#model='gpt-3.5-turbo-0125',</span></span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> <span class="dv">3</span>,</span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>        messages<span class="op">=</span>[</span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>                {<span class="st">"role"</span>: <span class="st">"system"</span>, <span class="st">"content"</span>: system},</span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>                {<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: <span class="ss">f'</span><span class="sc">{</span>text<span class="sc">}</span><span class="ss">'</span>},</span>
+<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>                ]</span>
+<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [r.message.content <span class="cf">for</span> r <span class="kw">in</span> response.choices]</span>
+<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a>    summary <span class="op">=</span> response.choices[<span class="dv">0</span>].message.content</span>
+<span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> summary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-error">
+<pre><code>SyntaxError: invalid syntax (1896766436.py, line 23)</code></pre>
+</div>
+</div>
+<div id="cell-16" class="cell" data-execution_count="88">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> summarize(conclusion)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-17" class="cell" data-execution_count="89">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(a[<span class="dv">0</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>I explore how the “armed Black criminal” image affects media attention to Black Lives Matter (BLM) protests following U.S. police killings of Black Americans between July 2014 and December 2016. My analysis reveals that BLM protests expanded media coverage, especially for non-armed victims, shifting focus from black criminality to unjust policing. Despite BLM's efforts, past narratives of black criminality still overshadowed the coverage, indicating controlling images significantly influence media responses to protests. I argue that for minority-led movements like BLM, overcoming controlling images in media is crucial for directing attention and framing their narratives. This study emphasizes the need for scholars to consider how controlling images mediate media attention to social movements, especially those challenging structural racism. My findings call for future research on how media narratives evolve in response to movements like BLM and the role of controlling images in shaping these narratives.</code></pre>
+</div>
+</div>
+
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

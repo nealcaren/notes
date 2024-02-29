@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.549">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Neal Caren, Associate Professor, Department of Sociology, University of North Carolina, Chapel Hill">
+<meta name="dcterms.date" content="2024-02-17">
+<meta name="keywords" content="Pydantic, ChatGPT API, social media posts, function calling">
+<meta name="description" content="Explore how to use Pydantic and the ChatGPT API for automated generation of social media posts, including different styles of tweets, to enhance article sharing and engagement.">
+
+<title>notes - Using ChatGPT to Make Social Media Posts</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+<meta name="twitter:title" content="notes - Using ChatGPT to Make Social Media Posts">
+<meta name="twitter:description" content="More using Pydantic for OpenAI function calling">
+<meta name="twitter:image" content="newsie.webp">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/nealcaren"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://bsky.app/profile/haphazardsoc.bsky.social"> <i class="bi bi-twitter" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+          <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Using ChatGPT to Make Social Media Posts</h1>
+                  <div>
+        <div class="description">
+          More using Pydantic for OpenAI function calling
+        </div>
+      </div>
+                          <div class="quarto-categories">
+                <div class="quarto-category">OpenAI</div>
+              </div>
+                  </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">February 17, 2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+
+  <div>
+    <div class="keywords">
+      <div class="block-title">Keywords</div>
+      <p>Pydantic, ChatGPT API, social media posts, function calling</p>
+    </div>
+  </div>
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+<p>This notebook uses pydantic and ChatGPT API’s function calling to make some social media posts about an article. Mostly, I was interested in ways to get it to make different styles of tweets, such as ones that summarize the article vs ones that highlight a single insight.</p>
+<div id="8ea75acd-65f0-4c79-91cd-f51cb003dc93" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pip install openai pydantic <span class="op">-</span>q</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Note: you may need to restart the kernel to use updated packages.</code></pre>
+</div>
+</div>
+<div id="28758811-c80a-4ceb-b299-9c5464459db8" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> BaseModel, Field</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Optional, List</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> openai <span class="im">import</span> OpenAI</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">'display.max_colwidth'</span>, <span class="dv">300</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Pydantic is a library that helps define the shape and type of our data, making sure it matches our expectations before we proceed with our code. Here’s a breakdown of the code block using Pydantic:</p>
+<ul>
+<li><p><strong>BaseModel</strong>: This is a key part of Pydantic. Think of it as a blueprint for the data you expect. You define a class that inherits from <code>BaseModel</code>, and in it, you detail the structure of your data.</p></li>
+<li><p><strong>Fields</strong>: Inside each class that inherits from <code>BaseModel</code>, we define what data we expect using fields. For example, <code>content: str</code> means we expect a piece of data named <code>content</code> that should be a string. The <code>Field(...)</code> function is used to add extra details about each field, like a description or default value.</p></li>
+<li><p><strong>Classes Defined</strong>:</p>
+<ul>
+<li><strong>SummaryTweet</strong>: A class for creating objects that represent a concise version of an abstract.</li>
+<li><strong>AnnounceTweet</strong>: A class for making objects that represent a tweet announcing a new article.</li>
+<li><strong>InsightTweet</strong>: This class is for objects that encapsulate a simple insight from complex social science concepts.</li>
+<li><strong>ThreadTweet</strong>: A class for a list of tweets, making up a thread about an article.</li>
+<li><strong>GenerateTweets</strong>: This class combines all the above, organizing them into lists of each type of tweet.</li>
+</ul></li>
+<li><p><strong>List Fields</strong>: When we want to store multiple items (like multiple tweets of the same kind), we use <code>List[SomeClass]</code>. This tells Pydantic we expect a list where each item is an instance of <code>SomeClass</code>.</p></li>
+</ul>
+<p>This code essentially sets up a structure for handling different types of tweets as data objects. By defining these classes, we ensure that the data we work with matches our expectations, reducing bugs and making our code more reliable.</p>
+<div id="19cea5ce-6118-40b4-9c2e-fdd6ddba113e" class="cell" data-execution_count="42">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SummaryTweet(BaseModel):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    content: <span class="bu">str</span> <span class="op">=</span> Field(..., description<span class="op">=</span><span class="st">"A concise version of the abstract in tweet format. No Hastags"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> AnnounceTweet(BaseModel):</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    content: <span class="bu">str</span> <span class="op">=</span> Field(..., description<span class="op">=</span><span class="st">"A tweet announcing a new article. Text must include the author and title.  No Hastags"</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> InsightTweet(BaseModel):</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    content: <span class="bu">str</span> <span class="op">=</span> Field(..., description<span class="op">=</span><span class="st">"Simple, understandable statement distilling a complex social science concept.  No Hastags"</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ThreadTweet(BaseModel):</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    content: List[<span class="bu">str</span>] <span class="op">=</span> Field(default<span class="op">=</span>[], description<span class="op">=</span><span class="st">"A list of tweets that together form a thread about the article, summarizing its key points and implications, engaging the audience, and encouraging further discussion or reading. No hashtags."</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> GenerateTweets(BaseModel):</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    summary_tweets: List[SummaryTweet] <span class="op">=</span> Field(default<span class="op">=</span>[], description<span class="op">=</span><span class="st">"A list of SummaryTweet instances."</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    insight_tweets: List[InsightTweet] <span class="op">=</span> Field(default<span class="op">=</span>[], description<span class="op">=</span><span class="st">"A list of InsightTweet instances."</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    announce_tweets: List[AnnounceTweet] <span class="op">=</span> Field(default<span class="op">=</span>[], description<span class="op">=</span><span class="st">"A list of AnnounceTweet instances."</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    thread_tweets: List[ThreadTweet] <span class="op">=</span> Field(default<span class="op">=</span>[], description<span class="op">=</span><span class="st">"A list of ThreadTweet instances."</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Note: there might be a simpler way to do this, since each of the subclasses only has one field.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>For our purposes, we are using to create a JSON schema that we want ChatGPT to follow.</p>
+<div id="a1e4b3c8" class="cell" data-execution_count="70">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ThreadTweet.model_json_schema()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="70">
+<pre><code>{'properties': {'content': {'default': [],
+   'description': 'A list of tweets that together form a thread about the article, summarizing its key points and implications, engaging the audience, and encouraging further discussion or reading. No hashtags.',
+   'items': {'type': 'string'},
+   'title': 'Content',
+   'type': 'array'}},
+ 'title': 'ThreadTweet',
+ 'type': 'object'}</code></pre>
+</div>
+</div>
+<div id="2a716c73" class="cell" data-execution_count="71">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>GenerateTweets.model_json_schema()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="71">
+<pre><code>{'$defs': {'AnnounceTweet': {'properties': {'content': {'description': 'A tweet announcing a new article. Text must include the author and title.  No Hastags',
+     'title': 'Content',
+     'type': 'string'}},
+   'required': ['content'],
+   'title': 'AnnounceTweet',
+   'type': 'object'},
+  'InsightTweet': {'properties': {'content': {'description': 'Simple, understandable statement distilling a complex social science concept.  No Hastags',
+     'title': 'Content',
+     'type': 'string'}},
+   'required': ['content'],
+   'title': 'InsightTweet',
+   'type': 'object'},
+  'SummaryTweet': {'properties': {'content': {'description': 'A concise version of the abstract in tweet format. No Hastags',
+     'title': 'Content',
+     'type': 'string'}},
+   'required': ['content'],
+   'title': 'SummaryTweet',
+   'type': 'object'},
+  'ThreadTweet': {'properties': {'content': {'default': [],
+     'description': 'A list of tweets that together form a thread about the article, summarizing its key points and implications, engaging the audience, and encouraging further discussion or reading. No hashtags.',
+     'items': {'type': 'string'},
+     'title': 'Content',
+     'type': 'array'}},
+   'title': 'ThreadTweet',
+   'type': 'object'}},
+ 'properties': {'summary_tweets': {'default': [],
+   'description': 'A list of SummaryTweet instances.',
+   'items': {'$ref': '#/$defs/SummaryTweet'},
+   'title': 'Summary Tweets',
+   'type': 'array'},
+  'insight_tweets': {'default': [],
+   'description': 'A list of InsightTweet instances.',
+   'items': {'$ref': '#/$defs/InsightTweet'},
+   'title': 'Insight Tweets',
+   'type': 'array'},
+  'announce_tweets': {'default': [],
+   'description': 'A list of AnnounceTweet instances.',
+   'items': {'$ref': '#/$defs/AnnounceTweet'},
+   'title': 'Announce Tweets',
+   'type': 'array'},
+  'thread_tweets': {'default': [],
+   'description': 'A list of ThreadTweet instances.',
+   'items': {'$ref': '#/$defs/ThreadTweet'},
+   'title': 'Thread Tweets',
+   'type': 'array'}},
+ 'title': 'GenerateTweets',
+ 'type': 'object'}</code></pre>
+</div>
+</div>
+<div id="8467aa7d-645f-41d2-b9c9-b9052023f4b2" class="cell" data-execution_count="43">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># I put in the introduction when using GPT4 because it actually uses the extra information.</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>article <span class="op">=</span> <span class="st">'''</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="st">TITLE: The MAGA Movement's Big Umbrella</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="st">AUTHOR: Hank Johnston</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="st">JOURNAL: Mobilization: An International Quarterly (2024) 28 (4): 409–433.</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="st">LINK: https://doi.org/10.17813/1086-671X-28-4-409</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="st">ABSTRACT: This article considers the phenomenon of MAGAism as a general, “big-umbrella” social movement to probe its structure and persistence. Drawing on my research on nationalist movements, I discuss the narrative flexibility and emotional power of nationalism and consider how these characteristics fuel a particularly resentful form of majoritarian nationalism—MAGAism. I identify five points of entry for MAGA participation, starting with this bitter majoritarian nationalism, then populism, then traditional conservatism, next a Trumpian personality cult, and ending with the alt-right’s extreme white supremacism and fascism. I then discuss two forces that gather this unlikely collection of groups and individuals under the MAGA umbrella: (1) the flexibility of social identity and how it allows status-threat narratives to subsume and redirect economic and political claims; (2) the social media environment of the 2020s, cut loose from the traditional gatekeepers of news and information, wherein maximizing hits—not accuracy—is the guiding principle. On the one hand, social media intensify the prominence of the demagogic celebrity at the helm of the Republican Party, Donald J. Trump. On the other hand, alt-right trolls compete for prominence by seeking outrageousness and shock value, enhanced by algorithms that create a closed information environment. These social media trends pull MAGA adherents further to the right by inflaming public discourse and building the movement on lies and conspiracies.</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="st">INTRODUCTION: The rise of far right-wing parties and extremist groups is now a topic of deep concern among social scientists who study collective action and contentious politics.  As a reader of this special issue of Mobilization, this trend no doubt has been on your mind a lot, as it has been on mine—especially the challenges it poses to democratic institutions.i In the U.S. today, one of the major political parties actively restricts voting rights, bans books in libraries, embraces conspiracies, flaunts constitutional principles, and limits public-school curricula on topics such as diversity, slavery, gender and sexuality (Natanson 2023a, 2023b)—and millions of MAGA supporters are okay with it (Baker, Perry, and Whitehead, 2020; Enders, Farhart, Miller, and Uscinski 2022; Graham et al. 2021; Stewart 2023). Further along the right-wing spectrum, one increasingly finds rising antisemitism, white Christian nationalism, gun-toting bullies, and misogynists (see Davis and Kettrey’s study in this issue) in the U.S. public sphere, raising parallels with European history in the early twentieth century and its brown shirts and black shirts (rather than today’s polo shirts and tac gear). While violence and intolerance are not unique to the extreme right, these trends reflect a synergy between the current political environment, eroding democratic norms, and—among more and more citizens in democratic states—authoritarian and even fascist tendencies (Jackson 2021; Wintemute, Robinson, Tomish 2022). In the U.S. these trends can be grouped under the umbrella of MAGAism where majoritarian nationalism mixes with populism, far-right extremism, and a virtual (in both meanings of the term) potpourri of themes such as antiwokeness, antivaccines, parental rights, gun rights, sovereign citizenry, science denial, masculinity, the lie of a stolen 2020 election, Trumpian personality cult, white replacement, QAnon conspiracies, among many others. This essay contextualizes the special issue articles by situating them in relation to trends in the U.S., which I discuss under the big umbrella of MAGAism. Following Tarrow (2021: 175), common usage in the popular press, and Trump himself, I consider MAGAism as a general social movement, one that encompasses the rightward shift of public discourse and politics in the U.S. plus the array of mobilizing groups that drive it.ii  I will offer a somewhat personalized essay that draws on insights from my work on the power (and danger) of nationalism to analyze a particularly resentful majoritarian nationalism—often labeled white nationalism in the U.S.  (Graham et al. 2021; Mudde 2019, Miller-Idriss, 2021; Young 2017). I am interested not only in militias, alt-right trolls, and white-supremacist churches,  but—more broadly—the mechanisms that allow these extremists to be grouped with millions of middle-class working citizens who come to the movement via parental-rights groups, suburban bible-study groups, or as antivaxxers, tradition-alists, or Constitutionalists.  MAGAism is a big-tent collective action—a movement with continuity, shared identity, diverse claims and political objectives, networked by an array of groups and organizations—the movement’s mobilizing structures that mostly stand apart from the Republican Party. I will identify the movement’s patterns of discourse and how it is structured to help understand the complexity, die-hard loyalty, denialism, and conspiracies that unite millions of MAGAistas in the face of factual evidence that should undermine their beliefs. I pose the fundamental question of collective action: how is the MAGA movement possible?  </span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="70ac052f-1d5c-4188-be90-6063fb5093be" class="cell" data-execution_count="72">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_tweets(article):</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    client <span class="op">=</span> OpenAI(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        max_retries<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        timeout<span class="op">=</span><span class="fl">90.0</span>, </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    messages <span class="op">=</span> [</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        {</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>            <span class="st">"role"</span>: <span class="st">"system"</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>            <span class="st">"content"</span>: <span class="st">''' You write a variety of different types of social media posts about sociology articles.</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="st">If you perform well, everyone gets a raise, while there are negative consequences if the posts don't get views.</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="st">NEVER USE HASHTAGS.</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>,</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>        },</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>        {</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>            <span class="st">"role"</span>: <span class="st">"user"</span>,</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>            <span class="st">"content"</span>: <span class="ss">f"""Generate five tweets of each style plus a tweet thread about this sociology article:</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="ss">            </span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="ss">      </span><span class="sc">{</span>article<span class="sc">}</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="ss">      </span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="ss">      """</span>,</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>        },</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    completion <span class="op">=</span> client.chat.completions.create(</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>        model <span class="op">=</span> <span class="st">'gpt-4-turbo-preview'</span>,     <span class="co">#   model="gpt-3.5-turbo" is 20x cheaper but isn't as insightful </span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>        functions<span class="op">=</span>[</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>            {</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>                <span class="st">"name"</span>: <span class="st">"generate_tweets"</span>,</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>                <span class="st">"description"</span>: <span class="st">"Create multiple social media posts, including a tweet thread, based on an article abstract."</span>,</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>                <span class="st">"parameters"</span>: GenerateTweets.model_json_schema(),</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>            },</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>        ],</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>        n<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>        messages<span class="op">=</span>messages,</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> json.loads(completion.choices[<span class="dv">0</span>].message.function_call.arguments)</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>    tweets <span class="op">=</span> [{<span class="st">'type'</span>: tweet_type.split(<span class="st">'_'</span>)[<span class="dv">0</span>], <span class="st">'text'</span>: t[<span class="st">'content'</span>]} <span class="cf">for</span> tweet_type <span class="kw">in</span> r <span class="cf">for</span> t <span class="kw">in</span> r[tweet_type]]</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(tweets)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="b95ad29d-f8d9-4cd2-a46c-c1956d7ec478" class="cell" data-execution_count="66">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>tdf <span class="op">=</span> make_tweets(article)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="aad55f97" class="cell" data-execution_count="67">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Grouping and printing with check for list in 'text' column</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> type_name, group <span class="kw">in</span> tdf.groupby(<span class="st">'type'</span>):</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Type: </span><span class="sc">{</span>type_name<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> index, row <span class="kw">in</span> group.iterrows():</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(row[<span class="st">'text'</span>], <span class="bu">list</span>):</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> item <span class="kw">in</span> row[<span class="st">'text'</span>]:</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>                <span class="bu">print</span>(<span class="ss">f"- </span><span class="sc">{</span>item<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"- </span><span class="sc">{</span>row[<span class="st">'text'</span>]<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Type: announce
+- New research by Hank Johnston in Mobilization investigates the MAGA movement's vast reach and the social forces fueling its endurance. The MAGA Movement's Big Umbrella: https://doi.org/10.17813/1086-671X-28-4-409
+Type: insight
+- Nationalism's emotional power can forge unlikely alliances, proving pivotal in the rise of movements like MAGAism.
+- Social identity's flexibility allows economic and political grievances to be reframed as status threats, fueling movements like MAGA.
+- In an era where hits trump accuracy, social media perpetuates echo chambers that magnify polarizing figures and ideologies.
+- The MAGA movement’s diverse entry points reflect the complex appeal of political identities in today's rapidly changing society.
+- Extremist movements leverage the digital age's vast reach, showcasing the dramatic impact of social media on political mobilization.
+Type: summary
+- Hank Johnston's article in Mobilization delves into MAGAism, exploring its roots in resentful majoritarian nationalism and its five diverse points of entry.
+- Johnston identifies social media and the flexibility of social identity as key forces uniting diverse MAGA groups under one 'big umbrella.'
+- Through examining MAGAism, the article discusses how emotional narratives and nationalism fuel the movement's persistence and growth.
+- The MAGA movement is dissected for its structure: from majoritarian nationalism to extreme white supremacism, uncovering its complex foundation.
+- Johnston's research highlights how the 2020s social media landscape propels MAGAism, intensifying right-wing shifts through misinformation and shock value.
+Type: thread
+- In Hank Johnston's latest article, 'The MAGA Movement's Big Umbrella,' he navigates the multifaceted world of MAGAism, a movement defined by its emotional engagement and diverse entry points.
+- MAGAism isn't just about one ideology. It’s about majoritarian nationalism, populism, conservatism, a Trumpian personality cult, and extreme white supremacism, all under one 'big umbrella.'
+- Johnston points out the crucial role of social identity flexibility and the chaotic 2020s social media landscape in unifying these varied elements, creating a powerful force despite conflicting views.
+- The rise of the MAGA movement signifies more than political allegiance; it's about the emotional narratives and nationalistic feelings that resonate with many, pushing the discourse further right through misinformation.
+- Lastly, this comprehensive look at MAGAism sheds light on how digital platforms contribute to the movement's momentum, emphasizing the need for awareness in the digital age. A must-read for anyone looking to understand the complexities of modern political movements.</code></pre>
+</div>
+</div>
+<p>GPT4 doesn’t always follow the directions, for example, there’s only one “announce” style tweet, but GPT3.5 gets lost more often when something complex is going on, such as the tweet thread.</p>
+
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

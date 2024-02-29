@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.549">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Neal Caren, Associate Professor, Department of Sociology, University of North Carolina, Chapel Hill">
+<meta name="dcterms.date" content="2024-02-25">
+<meta name="description" content="Using sentence transformers to add and subtract concepts.">
+
+<title>notes - More with sentence embeddings</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+<meta name="twitter:title" content="notes - More with sentence embeddings">
+<meta name="twitter:description" content="Using sentence transformers to add and subtract concepts.">
+<meta name="twitter:image" content="professor.webp">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/nealcaren"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://bsky.app/profile/haphazardsoc.bsky.social"> <i class="bi bi-twitter" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+          <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">More with sentence embeddings</h1>
+                  <div>
+        <div class="description">
+          Using sentence transformers to add and subtract concepts.
+        </div>
+      </div>
+                          <div class="quarto-categories">
+                <div class="quarto-category">sentence embeddings</div>
+              </div>
+                  </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">February 25, 2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+<p>This is a followup to an early post on <a href="https://nealcaren.github.io/notes/posts/sentence-embeddings/sentence-embeddings.html">sentence embeddings</a>. I wanted to investigate what it looks like when you you add or subtract concept embeddings before finding the nearest matching text.</p>
+<div id="cell-2" class="cell" data-execution_count="65">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer, util</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Show wider columns</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">"display.max_colwidth"</span>, <span class="dv">600</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter out all warnings</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Using the same sentence transformer model and corpus of sociological abstracts as before.</p>
+<div id="cell-4" class="cell" data-execution_count="66">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> SentenceTransformer(<span class="st">"all-MiniLM-L6-v2"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-5" class="cell" data-execution_count="67">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_json(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"https://raw.githubusercontent.com/nealcaren/notes/main/posts/abstracts/sociology-abstracts.json"</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">len</span>(df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="67">
+<pre><code>9797</code></pre>
+</div>
+</div>
+<p>I knew that I would want to compute the embeddings for the abstract corpus just once, and then save the results in a feature in the dataframe, since this steps takes a couple of minutes.</p>
+<div id="cell-7" class="cell" data-execution_count="68">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_tensors(text):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model.encode(text, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"abstract_encodings"</span>] <span class="op">=</span> df[<span class="st">"Abstract"</span>].<span class="bu">apply</span>(make_tensors)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>I asked ChatGPT to write me a function that would take a text and find the most similar text from a corpus, with the option to add or remove specific concepts, using sentence transformers. After some back and forth, here’s what it gave me.</p>
+<div id="cell-9" class="cell" data-execution_count="69">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> transform_and_match_df(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    text, <span class="op">*</span>, remove_concept<span class="op">=</span><span class="va">None</span>, add_concept<span class="op">=</span><span class="va">None</span>, df, feature_name, n<span class="op">=</span><span class="dv">5</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">    Transforms the text by optionally removing one concept and adding another, then finds the n nearest matches from a DataFrame.</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">    Parameters:</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">    - text (str): The base text for transformation.</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">    - remove_concept (str, optional): The concept to remove from the base text.</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">    - add_concept (str, optional): The concept to add to the transformed text.</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">    - df (pandas.DataFrame): A DataFrame containing pre-computed embeddings.</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">    - feature_name (str): The name of the DataFrame column containing the embeddings.</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">    - n (int): The number of nearest neighbors to return.</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">    - pandas.DataFrame: A DataFrame of the n nearest matches.</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Initialize the model</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> SentenceTransformer(<span class="st">"all-MiniLM-L6-v2"</span>)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Generate embedding for the text</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    text_embedding <span class="op">=</span> model.encode(text, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Initialize transformed_embedding with text_embedding</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    transformed_embedding <span class="op">=</span> text_embedding.clone()</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># If remove_concept is specified, subtract its embedding</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> remove_concept <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>        remove_embedding <span class="op">=</span> model.encode(remove_concept, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>        transformed_embedding <span class="op">-=</span> remove_embedding</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>    <span class="co"># If add_concept is specified, add its embedding</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> add_concept <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>        add_embedding <span class="op">=</span> model.encode(add_concept, convert_to_tensor<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>        transformed_embedding <span class="op">+=</span> add_embedding</span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Convert DataFrame embeddings column from list to tensor</span></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>    df_embeddings <span class="op">=</span> torch.stack([torch.tensor(e) <span class="cf">for</span> e <span class="kw">in</span> df[feature_name].values])</span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Compute cosine similarities</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>    similarities <span class="op">=</span> util.cos_sim(transformed_embedding, df_embeddings).cpu()</span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Find the indices of the top n similarity scores</span></span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>    nearest_match_indices <span class="op">=</span> similarities.squeeze(<span class="dv">0</span>).topk(n).indices</span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Return the nearest matching rows from the DataFrame</span></span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df.iloc[nearest_match_indices.tolist()]</span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a><span class="co"># This enforces named arguments for everything except 'text'</span></span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a><span class="co"># Example usage:</span></span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a><span class="co"># nearest_matches = transform_and_match_df(text="Your text here", df=your_dataframe, feature_name="your_embedding_column_name", n=3)</span></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a><span class="co"># print("Nearest matches:", nearest_matches)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>First test. Swap out a qualitative method for a experiments.</p>
+<div id="cell-11" class="cell" data-execution_count="70">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> transform_and_match_df(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    text<span class="op">=</span><span class="st">"We use interviews to analyze racial inequalities."</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    remove_concept<span class="op">=</span><span class="st">"qualitative"</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    add_concept <span class="op">=</span> <span class="st">"experiments"</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span> df,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    feature_name <span class="op">=</span> <span class="st">"abstract_encodings"</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>r[[<span class="st">"Abstract"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="70">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Abstract</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">8904</td>
+<td>Field experiments have proliferated throughout the social sciences and have become a mainstay for identifying racial discrimination during the hiring process. To date, field experiments of labor market discrimination have generally drawn their sample of job postings from limited sources, often from a single major online job posting website. While providing a large pool of job postings across labor markets, this narrow sampling procedure leaves open questions about the generalizability of the findings from field experiments of racial discrimination in the extant literature. In this paper, w...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">6162</td>
+<td>Field experiments using fictitious applications have become an increasingly important method for assessing hiring discrimination. Most field experiments of hiring, however, only observe whether the applicant receives an invitation to interview, called the “callback.” How adequate is our understanding of discrimination in the hiring process based on an assessment of discrimination in callbacks, when the ultimate subject of interest is discrimination in job offers? To address this question, we examine evidence from all available field experimental studies of racial or ethnic discrimination i...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">9168</td>
+<td>Previous research has established that people shift their identities situationally and may come to subconsciously mirror one another. We explore this phenomenon among survey interviewers in the 2004-2018 General Social Survey by drawing on repeated measures of racial identification collected after each interview. We find not only that interviewers self-identify differently over time but also that their response changes cannot be fully explained by several measurement-error related expectations, either random or systematic. Rather, interviewers are significantly more likely to identify thei...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">9049</td>
+<td>How do the demographic contexts of urban labor markets correlate with the extent to which racial and ethnic minorities are disadvantaged at the hiring stage? This paper builds on two branches of labor market stratification literature to link demographic contexts of labor markets to race- and ethnicity-based hiring discrimination that manifest within them. Relying on a unique large-scale field experiment that involved submitting nearly 12,000 fictitious resumes to real job postings across 50 major urban areas, I found that Black population size is associated with greater discrimination agai...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4843</td>
+<td>How do white observers react when people with black heritage assert a biracial, multiracial, or white identity rather than a black identity? To address this question, I conducted two experiments in which participants evaluated a darker-skinned or a lighter-skinned job applicant who presented his identity as either black, biracial, multiracial, or white. The results show that identity assertions influenced how white observers categorized applicants but not how they evaluated applicants. Most white observers accepted the identity of both the lighter-skinned and darker-skinned applicant when ...</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Took about eight seconds on my MacBook Air (M2). Results seem encouraging.</p>
+<p>How about an actual abstract?</p>
+<div id="cell-13" class="cell" data-execution_count="71">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>abstract <span class="op">=</span> <span class="st">"""Black men and women have different levels of average educational attainment, yet</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="st">few studies have focused on explaining how and why these patterns develop. One</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="st">explanation may be inequality in experiences with institutional punishment</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="st">through exclusionary school discipline and criminal justice exposure. Drawing on</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="st">intersectional frameworks and theories of social control, I examine the long-</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="st">term association between punishment and the Black gender gap using data from the</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="st">Children of the National Longitudinal Survey of Youth 1979 cohort (NLSY-C).</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="st">Decomposition analyses reveal that about one third of the gender gap can be</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="st">explained by gender differences in experiences with institutional punishments,</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="st">net of differences in observed behaviors. These measures are predictive at key</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="st">educational transition points, including finishing high school and earning a</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="st">4-year college degree. Though Black boys and girls have similar family</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="st">backgrounds and grow up in similar neighborhoods, results suggest that Black</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="st">girls have a persistent advantage in educational attainment due in part to their</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="st">lower levels of exposure to exclusionary school discipline and the criminal</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="st">justice system. In addition, I find that gender differences in early</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="st">achievement, early externalizing behavioral problems, school experiences, and</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="st">substance use in adolescence and early adulthood are associated with gender</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="st">differences in educational attainment. Taken together, these results illustrate</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="st">the importance of punishment disparities in understanding disparate educational</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="st">outcomes over the life course of Black men and women."""</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>First, try to get the most similar article that doesn’t is explicitly about racial discrimination.</p>
+<div id="cell-15" class="cell" data-execution_count="78">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> transform_and_match_df(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    text<span class="op">=</span>abstract,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    remove_concept<span class="op">=</span><span class="st">"racial discrimination, African American, Black"</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span> df,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    feature_name <span class="op">=</span> <span class="st">"abstract_encodings"</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>r[[<span class="st">"Abstract"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="78">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Abstract</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4711</td>
+<td>Although prior research links parental incarceration to deleterious outcomes for children during the life course, few studies have examined whether such incarceration affects the social exclusion of children during adolescence. Drawing on several lines of scholarship, the authors examined whether adolescents with incarcerated parents have fewer or lower quality relationships, participate in more antisocial peer networks, and feel less integrated or engaged in school. The study applies propensity score matching to survey and network data from a national sample of youth. Analyses indicated t...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">2378</td>
+<td>Why do men in the United States today complete less schooling than women? One reason may be gender differences in early self-regulation and prosocial behaviors. Scholars have found that boys’ early behavioral disadvantage predicts their lower average academic achievement during elementary school. In this study, I examine longer-term effects: Do these early behavioral differences predict boys’ lower rates of high school graduation, college enrollment and graduation, and fewer years of schooling completed in adulthood? If so, through what pathways are they linked? I leverage a nationally rep...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">9104</td>
+<td>Objective: The goal of this study is to examine the association between parental incarceration and parent–youth closeness. Background: Despite the established complex repercussions of incarceration for relationships between adults, and the well-known intergenerational consequences of parental incarceration, little is known about how incarceration structures intergenerational relationships between parents and children. Methods: In this article, I use data from the Future of Families and Child Wellbeing Study (N = 3408), a cohort of children followed over a 15-year period, to examine how par...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">4611</td>
+<td>In the present study, we examine the relationship between involvement in the criminal justice system and achieved socioeconomic status (SES), as well as the moderating effect of ascribed SES. Using data from the National Longitudinal Study of Adolescent to Adult Health, we find a nonlinear relationship between criminal justice involvement and achieved SES, such that deeper involvement leads to increasingly negative consequences on achieved SES. Furthermore, those coming from the highest socioeconomic backgrounds are not "protected"from the deleterious consequences of system involvement, bu...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">5538</td>
+<td>Research has documented a negative association between women’s educational attainment and early sexual intercourse, union formation, and pregnancy. However, the implications that school progression relative to age may have for the timing and order of such transitions are poorly understood. In this article, I argue that educational attainment has different implications depending on a student’s progression through school grades relative to her age. Using month of birth and age-at-school-entry policies to estimate the effect of advanced school progression by age, I show that it accelerates th...</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Pretty good, although maybe skewing a bit too much towards parental incarceration.</p>
+<p>What about articles on the same topic focusing on Latino/Latinas?</p>
+<div id="cell-17" class="cell" data-execution_count="79">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> transform_and_match_df(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    text<span class="op">=</span>abstract,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    remove_concept<span class="op">=</span><span class="st">"African American, Black"</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    add_concept <span class="op">=</span> <span class="st">"Latino, Latina, Hispanic"</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span> df,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    feature_name <span class="op">=</span> <span class="st">"abstract_encodings"</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>r[[<span class="st">"Abstract"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="79">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Abstract</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2513</td>
+<td>The socializing power of the prison is routinely discussed as a prisonization process in which inmates learn to conform to life in the correctional facility. However, the impact that identities socialized in the prison may have outside of the institution itself remains an under-researched aspect of mass incarceration's collateral consequences. In this article I use ethnographic data collected over fifteen months in two juvenile justice facilities and interviews with twenty-four probation youth to examine how the identities socialized among Latino prison inmates spill over into high-incarce...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">4732</td>
+<td>Using a nationally representative sample of approximately 3,500 public schools, this study builds on and extends our knowledge of how ‘‘minority threat’’ manifests within schools. We test whether various disciplinary policies and practices are mobilized in accordance with Latino/a student composition, presumably the result of a group response to perceptions that white racial dominance is jeopardized. We gauge how schools’ Latino/a student populations are associated with the availability and use of several specific types of discipline. We further explore possible moderating influences of sc...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">5818</td>
+<td>We advance current knowledge of school punishment by examining (1) the prevalence of exclusionary discipline in elementary school, (2) racial disparities in exclusionary discipline in elementary school, and (3) the association between exclusionary discipline and aggressive behavior in elementary school. Using child and parent reports from the Fragile Families Study, we estimate that more than one in ten children born between 1998 and 2000 in large US cities were suspended or expelled by age nine, when most were in third grade. We also find extreme racial disparity; about 40 percent of non-...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">9509</td>
+<td>Recent work has begun to investigate how criminalization is mediated through interpersonal relationships. While this research emphasizes the importance of gender dynamics and cross-gender intimate relations for boys and men of color, little is known about how gendered and sexualized relationships matter for criminalized women and girls of color. This study seeks to fill this knowledge gap and asks: How do system-involved Chicanas’ relationships with men and boys shape their experiences of criminalization over the life course? How do they navigate criminalization through men and boys? While...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">556</td>
+<td>Opportunities for upward mobility have been declining in the United States in recent decades. Within this context, I examine the mobility trajectories of a contemporary cohort of 1.5-, second-, and third-plus-generation Latino youth. Drawing on survey data from California that accounts for the precarious legal status of many 1.5 generation immigrants, I find that Latino youths' patterns of postsecondary enrollment and employment do not differ by generation since migration. Additionally, I do not find evidence of racial/ethnic barriers to Latino youths' enrollment in less selective colleges...</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Seems solid.</p>
+<p>What about dialing up gender and women’s experiences?</p>
+<div id="cell-19" class="cell" data-execution_count="80">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> transform_and_match_df(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    text<span class="op">=</span>abstract,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    add_concept <span class="op">=</span> <span class="st">"gender, female, women"</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span> df,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    feature_name <span class="op">=</span> <span class="st">"abstract_encodings"</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>r[[<span class="st">"Abstract"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="80">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Abstract</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">3590</td>
+<td>School disciplinary processes are an important mechanism of inequality in education. Most prior research in this area focuses on the significantly higher rates of punishment among African American boys, but in this article, we turn our attention to the discipline of African American girls. Using advanced multilevel models and a longitudinal data set of detailed school discipline records, we analyze interactions between race and gender on office referrals. The results show troubling and significant disparities in the punishment of African American girls. Controlling for background variables...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">6741</td>
+<td>In this research, I use theories of framing and social construction to investigate how race and gender are featured in national news coverage of the school-to-prison pipeline, and how policies and practices funnel students from school to the criminal justice system. Results indicate that there are three primary narratives surrounding the school-to-prison pipeline. The first is a narrative that harsh disciplinary practices in schools are irrational and negatively impact all students. The second narrative crafts the school-to-prison pipeline as a social problem for all Black students irrespe...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">6720</td>
+<td>We examine change across U.S. cohorts born between 1920 and 2000 in their probability of having had sex with same-sex partners in the last year and since age 18. Using data from the 1988–2018 General Social Surveys, we explore how trends differ by gender, race, and class background. We find steep increases across birth cohorts in the proportion of women who have had sex with both men and women since age 18, whereas increases for men are less steep. We suggest that the trends reflect an increasingly accepting social climate, and that women’s steeper trend is rooted in a long-term asymmetry ...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">7229</td>
+<td>Intersectionality scholars have long identified dynamic configurations of race and gender ideologies. Yet, survey research on racial and gender attitudes tends to treat these components as independent. We apply latent class analysis to a set of racial and gender attitude items from the General Social Survey (1977 to 2018) to identify four configurations of individuals’ simultaneous views on race and gender. Two of these configurations hold unified progressive or regressive racial and gender attitudes. The other two formations have discordant racial and gender attitudes, where progressive v...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">5067</td>
+<td>This study is the first to use nationally representative data to examine whether differences in gender-typical behaviors among adolescents are associated with high school academic performance and whether such associations vary by race or socioeconomic status. Using wave I data from the National Longitudinal Study of Adolescent Health and linked academic transcript data from the Adolescent Health and Academic Achievement study, we find that boys who report moderate levels of gender atypicality earn the highest grade point averages (GPAs), but few boys score in this range. As gender typicali...</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Seems good, but we seem to have drifted more towards punishiment than education, which is, I think a function of how the abstract was written. What if dial up the education?</p>
+<div id="cell-23" class="cell" data-execution_count="77">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> transform_and_match_df(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    text<span class="op">=</span>abstract,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    remove_concept<span class="op">=</span><span class="st">"survey, regression, statistical analysis"</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    add_concept <span class="op">=</span> <span class="st">"education, in-depth interviews, participant observation"</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span> df,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    feature_name <span class="op">=</span> <span class="st">"abstract_encodings"</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>r[[<span class="st">"Abstract"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="77">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Abstract</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">6741</td>
+<td>In this research, I use theories of framing and social construction to investigate how race and gender are featured in national news coverage of the school-to-prison pipeline, and how policies and practices funnel students from school to the criminal justice system. Results indicate that there are three primary narratives surrounding the school-to-prison pipeline. The first is a narrative that harsh disciplinary practices in schools are irrational and negatively impact all students. The second narrative crafts the school-to-prison pipeline as a social problem for all Black students irrespe...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">279</td>
+<td>Though sociologists have examined how mass incarceration affects stratification, remarkably little is known about how it shapes educational disparities. Analyzing the Fragile Families Study and its rich paternal incarceration data, I ask whether black and white children with fathers who have been incarcerated are less prepared for school both cognitively and non-cognitively as a result, and whether racial and gendered disparities in incarceration help explain the persistence of similar gaps in educational outcomes and trajectories. Using a variety of estimation strategies, I show that expe...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2219</td>
+<td>Research consistently demonstrates that black students are disproportionately subject to behavioral sanctions, yet little is known about contextual variation. This paper explores the relationship between school racial composition and racial inequality in discipline. Prior work suggests that demographic composition predicts harsh punishment of minorities. Accordingly, a threat framework suggests that increases in black student enrollment correspond to increases in punitive school policies. Results from this paper find some support for this hypothesis, finding that the percent of black stude...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3590</td>
+<td>School disciplinary processes are an important mechanism of inequality in education. Most prior research in this area focuses on the significantly higher rates of punishment among African American boys, but in this article, we turn our attention to the discipline of African American girls. Using advanced multilevel models and a longitudinal data set of detailed school discipline records, we analyze interactions between race and gender on office referrals. The results show troubling and significant disparities in the punishment of African American girls. Controlling for background variables...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">5735</td>
+<td>Punitive and disciplinary forms of governance disproportionately target low-income Black Americans for surveillance and punishment, and research finds far-reaching consequences of such criminalization. Drawing on in-depth interviews with 46 low-income Black mothers of adolescents in urban neighborhoods, this article advances understanding of the long reach of criminalization by examining the intersection of two related areas of inquiry: the criminalization of Black youth and the institutional scrutiny and punitive treatment of Black mothers. Findings demonstrate that poor Black mothers cal...</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Again, seems like a plausible set of results. Finally, let’s try to swap out the method.</p>
+<div id="cell-25" class="cell" data-execution_count="83">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> transform_and_match_df(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    text<span class="op">=</span>abstract,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    remove_concept<span class="op">=</span><span class="st">"survey, regression, statistical analysis"</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    add_concept <span class="op">=</span> <span class="st">"in-depth interviews, participant observation, enthography, qualitative research"</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    df<span class="op">=</span> df,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    feature_name <span class="op">=</span> <span class="st">"abstract_encodings"</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>r[[<span class="st">"Abstract"</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="83">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Abstract</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">6741</td>
+<td>In this research, I use theories of framing and social construction to investigate how race and gender are featured in national news coverage of the school-to-prison pipeline, and how policies and practices funnel students from school to the criminal justice system. Results indicate that there are three primary narratives surrounding the school-to-prison pipeline. The first is a narrative that harsh disciplinary practices in schools are irrational and negatively impact all students. The second narrative crafts the school-to-prison pipeline as a social problem for all Black students irrespe...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5859</td>
+<td>Although Black mothers are disproportionately represented among formerly incarcerated mothers in the United States, existing research has largely neglected to document the challenges they face in resuming their parenting roles after prison or jail. This study addresses this gap using 18 months of participant observations with formerly incarcerated Black women to examine how state surveillance under post-release supervision and child welfare services shapes and constrains formerly incarcerated Black women's mothering practices. The study develops a typology of three context-specific strateg...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">5735</td>
+<td>Punitive and disciplinary forms of governance disproportionately target low-income Black Americans for surveillance and punishment, and research finds far-reaching consequences of such criminalization. Drawing on in-depth interviews with 46 low-income Black mothers of adolescents in urban neighborhoods, this article advances understanding of the long reach of criminalization by examining the intersection of two related areas of inquiry: the criminalization of Black youth and the institutional scrutiny and punitive treatment of Black mothers. Findings demonstrate that poor Black mothers cal...</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">9348</td>
+<td>Numerous articles and textbooks advise qualitative researchers on accessing “hard-to-reach” or “hidden” populations. In this article, I compare two studies that I conducted with justice-involved women in the United States: a yearlong ethnography inside a state women’s prison and an interview study with formerly incarcerated women. Although these two populations are interconnected—and both are widely deemed hard-to-reach—the barriers to access differed. In the prison study, hard-to-reach reflected an issue of institutional legitimacy, in which researchers must demonstrate themselves and the...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">279</td>
+<td>Though sociologists have examined how mass incarceration affects stratification, remarkably little is known about how it shapes educational disparities. Analyzing the Fragile Families Study and its rich paternal incarceration data, I ask whether black and white children with fathers who have been incarcerated are less prepared for school both cognitively and non-cognitively as a result, and whether racial and gendered disparities in incarceration help explain the persistence of similar gaps in educational outcomes and trajectories. Using a variety of estimation strategies, I show that expe...</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Drift a bit toward incarceration, and the methods thing wasn’t perfectly implemented, seemed to grab some things that were vague about the method, or perhaps described the quantitative work in qualitative ways.</p>
+<p>Overall, I would put the results comparable to the first page of a Google search. The first choice isn’t necessarily what I was looking for, but, overall, the top five give me something to work with.</p>
+
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

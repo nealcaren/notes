@@ -3,21 +3,12 @@ project:
   output-dir: docs  
   resources: 
     - "*.mp3"
-  render:
-    - "*.ipynb"
-    - "!drafts/"
-    
+
 execute:
   freeze: auto
 
-listing:
-  contents: posts
-  feed: true
-
 website:
   title: "notes"
-  favicon: logo.png
-  site-url: "https://nealcaren.github.io/notes"
   twitter-card: true
   navbar:
     right:
