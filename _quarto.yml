@@ -9,6 +9,7 @@ execute:
 
 website:
   title: "notes"
+  site-url: https://nealcaren.github.io/notes
   twitter-card: true
   navbar:
     right:
@@ -17,6 +18,8 @@ website:
         href: https://github.com/nealcaren
       - icon: twitter
         href: https://bsky.app/profile/haphazardsoc.bsky.social
+      - icon: rss
+        href: index.xml
 format:
   html:
     theme: cosmos
