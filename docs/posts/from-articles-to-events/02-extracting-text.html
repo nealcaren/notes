@@ -197,7 +197,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>This is one post in a series where I’m working to expand the working paper “<a href="https://osf.io/dvht7">Extracting protest events from newspaper articles with ChatGPT</a>” I wrote with Andy Andrews and Rashawn Ray. In that paper, we tested whether ChatGPT could replace my undergraduate RAs in extracting details about Black Lives Matter protests from media accounts. This time, I want to expand it to include more articles, movements, and variables.</p>
-<p><strong>Earlier Installments</strong> * Part 1: <a href="https://nealcaren.github.io/notes/posts/from-articles-to-events/01-downloading-articles.html">From Articles to Events</a></p>
+<p><strong>Earlier Installments</strong><br>
+* Part 1: <a href="https://nealcaren.github.io/notes/posts/from-articles-to-events/01-downloading-articles.html">From Articles to Events</a></p>
 <p>In this part, I’m taking the downloaded HTML files and extracting the useful information, such as the article headline and text. Rather than build custom parsers for each webpage, I’m going to use the wonderful <a href="https://newspaper.readthedocs.io/en/latest/">Newspaper3k</a> library to extract the relevant information from each article. It works on almost every media site, so it’s incredibly useful for turning HTML into something useful.</p>
 <div id="cell-2" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pip install newspaper3k</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>

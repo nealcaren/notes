@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/from-articles-to-events/03-event-check.html",
       "/posts/topic-models/topic-modeling.html",
       "/posts/from-articles-to-events/02-extracting-text.html",
       "/posts/from-articles-to-events/01-downloading-articles.html",
