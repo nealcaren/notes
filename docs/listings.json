@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/book/book-outline.html",
       "/posts/bias/LLM-bias-02.html",
       "/posts/bias/LLM-bias-01.html",
       "/posts/from-articles-to-events/03-event-check.html",
