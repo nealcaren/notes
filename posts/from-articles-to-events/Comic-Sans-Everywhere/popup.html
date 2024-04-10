@@ -1,0 +1,72 @@
+<!-- popup.html -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Comic Sans Everywhere</title>
+  <style>
+    body {
+      width: 400px;
+      font-family: 'Comic Sans MS', 'Comic Sans', bold;
+      background: rgb(0, 212, 255);
+      background: linear-gradient(90deg, rgba(0, 212, 255, 1) 0%, rgba(255, 94, 0, 1) 100%);
+
+    }
+
+    h1 {
+      color: rgb(0, 56, 0);
+      text-align: center;
+    }
+
+    #buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    button {
+      margin: 5px;
+      background: rgb(2, 0, 36);
+      background: linear-gradient(90deg, rgba(2, 0, 36, 1) 0%, rgba(110, 9, 121, 1) 50%, rgba(0, 212, 255, 1) 100%);
+
+      border: 3px solid red;
+      border-radius: 50%;
+      padding: 10px 20px;
+      font-size: 20px;
+      font-weight: bold;
+      color: rgb(153, 255, 127);
+      cursor: pointer;
+      font-family: 'Comic Sans MS', 'Comic Sans';
+    }
+
+    button:hover {
+      background: rgb(0, 212, 255);
+      background: linear-gradient(90deg, rgba(0, 212, 255, 1) 0%, rgba(110, 9, 121, 1) 50%, rgba(2, 0, 36, 1) 100%);
+      color: pink;
+      font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+    }
+
+    #qrImage {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      width: 80px;
+      height: 80px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Comic Sans Everywhere</h1>
+  <div id="buttons">
+    <button id="applyComicSans">Make Comic Sans</button>
+    <button id="undoComicSansBtn">Undo Comic Sans</button>
+  </div>
+  <a href="https://www.buymeacoffee.com/mkons" target="_blank">
+    <img id="qrImage" src="coffeeqr.png" alt="Buy me a coffee QR code">
+  </a>
+  <script src="popup.js"></script>
+</body>
+
+</html>
