@@ -7,9 +7,7 @@ image: feather.webp
 draft: false
 ---
 
-During a recent panel, I was reminded that there isn't really a great onboarding method for sociologists who want to learn Python. I've stopped and started one several times over the years, but thought it would be interesting to start again. This time, I'm also playing around with using Google's new Gemini Pro's model to [generate long texts](https://github.com/google-gemini/cookbook/blob/main/examples/Story_Writing_with_Prompt_Chaining.ipynb). Here's my current outline:
-
-# Python for Computational Social Science: A Hands-on Approach
+During a recent panel, I was reminded that there isn't really a great onboarding method for sociologists who want to learn Python. I've stopped and started one several times over the years, but thought it would be interesting to start again. This time, I'm also playing around with using Google's new Gemini Pro's model to [generate long texts](https://github.com/google-gemini/cookbook/blob/main/examples/Story_Writing_with_Prompt_Chaining.ipynb). Here's my current outline for "*Python for Computational Social Science: A Hands-on Approach*."
 
 ## Part 1: Foundations of Computational Social Science
 
