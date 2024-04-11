@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.549">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2024-04-10">
+<meta name="description" content="An section written by Claude">
+
+<title>notes - Stemming And Lemmatizations</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+<meta name="twitter:title" content="notes - Stemming And Lemmatizations">
+<meta name="twitter:description" content="An section written by Claude">
+<meta name="twitter:image" content="https://nealcaren.github.io/notes/posts/book/feather.webp">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/nealcaren"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://bsky.app/profile/haphazardsoc.bsky.social"> <i class="bi bi-twitter" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../../index.xml"> <i class="bi bi-rss" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+          <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Stemming And Lemmatizations</h1>
+                  <div>
+        <div class="description">
+          An section written by Claude
+        </div>
+      </div>
+                          <div class="quarto-categories">
+                <div class="quarto-category">book</div>
+              </div>
+                  </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">April 10, 2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+<p><em>I’m playing around with ways of having a LLM produce long-form content. For my first try, I’m feeding it pieces of a detailed outline. Below is sample of the command I’m using, and the outcome from running it over each section of the outline. I’ve done some modest editing to outline and light editing to the text. To be honest, the result is not perfect, but much better than I would have thought with minimal prompt hacking. Onward!</em></p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> anthropic</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>client <span class="op">=</span> anthropic.Anthropic(</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># defaults to os.environ.get("ANTHROPIC_API_KEY")</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    api_key<span class="op">=</span><span class="st">"my_api_key"</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>message <span class="op">=</span> client.messages.create(</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    model<span class="op">=</span><span class="st">"claude-3-opus-20240229"</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    max_tokens<span class="op">=</span><span class="dv">2313</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    temperature<span class="op">=</span><span class="fl">0.3</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    system<span class="op">=</span><span class="st">"You are an expert textbook writer who combines the clarity of a TED Talk speaker with the knowledge of an O'Reilly publishing writer. Your ultimate goal is to create educational content that is both engaging and informative. You always write in Markdown and provide examples that are relevant to the sociology.</span><span class="ch">\n\n</span><span class="st"> Use “a Conversational Explainer</span><span class="ch">\"</span><span class="st"> style:</span><span class="ch">\n</span><span class="st">* Use a conversational, user-friendly tone that assumes the reader is intelligent but doesn’t have this particular knowledge yet—like an experienced colleague onboarding a new hire. </span><span class="ch">\n</span><span class="st">* Write as if you anticipate the reader's questions or objections and answer them directly in your text. It's like having a two-way conversation. </span><span class="ch">\n</span><span class="st">* Using personal pronouns and contractions is a good rule of thumb. Write to your readers as though you’re sitting next to them having coffee, not lecturing to them from the front of the room.</span><span class="ch">\n</span><span class="st">* Scenario-based opening can really engage your readers. Scenarios allow readers to internalize a problem and become invested in learning about the solution.</span><span class="ch">\n</span><span class="st">* To mimic natural conversation, vary your sentence length and structure. Mixing short, impactful sentences with longer, more descriptive ones can make your writing rhythm feel more like spoken language.</span><span class="ch">\n</span><span class="st">* Acknowledge when something is complex or has limitations. This honesty builds trust and shows respect for the reader's intelligence. Y</span><span class="ch">\n</span><span class="st">* Use cool, unique examples—not the same old, same old.</span><span class="ch">\n</span><span class="st">* Avoid jargon or technical terms unless absolutely necessary. Explain specialized concepts in plain language.</span><span class="ch">\n</span><span class="st">* Address the reader directly using </span><span class="ch">\"</span><span class="st">you</span><span class="ch">\"</span><span class="st"> statements. This makes the content feel more tailored to the individual.</span><span class="ch">\n</span><span class="st">"</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    messages<span class="op">=</span>[</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        {</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>            <span class="st">"role"</span>: <span class="st">"user"</span>,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>            <span class="st">"content"</span>: [</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>                {</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"type"</span>: <span class="st">"text"</span>,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"text"</span>: <span class="st">"You are writing a book that&nbsp;provides sociology PhD students with a comprehensive introduction to using Python programming for computational social science analysis, focusing on gathering and analyzing text data with relevant sociological examples and no assumed prior knowledge.</span><span class="ch">\n\n</span><span class="st">Current Chapter: &nbsp;Stemming and Lemmatization: Reducing Words to Their Base Form</span><span class="ch">\n\n</span><span class="st">Prior Section: </span><span class="ch">\n</span><span class="st">### Types of Lemmatizers</span><span class="ch">\n\n</span><span class="st">Current section: </span><span class="ch">\n</span><span class="st">## Stemming vs. Lemmatization</span><span class="ch">\n</span><span class="st">- In-depth comparison of stemming and lemmatization</span><span class="ch">\n</span><span class="st">- Advantages and disadvantages of each approach</span><span class="ch">\n</span><span class="st">- When to use stemming or lemmatization in text analysis</span><span class="ch">\n\n\n</span><span class="st">Next section:</span><span class="ch">\n</span><span class="st">## Best Practices and Considerations</span><span class="ch">\n\n</span><span class="st">Based on this outline, can you write the current section, building on the prior section?</span><span class="ch">\n\n</span><span class="st">"</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>                }</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>            ]</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(message.content)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="stemming-and-lemmatizations" class="level1">
+<h1>Stemming And Lemmatizations</h1>
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>In the vast landscape of computational social science, text data has emerged as a goldmine for sociological research. From analyzing social media posts to understanding the nuances of political discourse, the ability to gather and analyze text data has opened up new avenues for exploring complex social phenomena. However, before diving into the intricacies of text analysis, it is crucial to understand the importance of text normalization.</p>
+<p>Imagine you are studying the public’s reaction to a controversial policy change announced on Twitter. As you collect tweets related to the topic, you notice that people express their opinions using various forms of the same words. For example, some users might tweet “this policy is unfair,” while others say “the unfairness of this policy is astounding.” To effectively analyze the sentiment and themes in these tweets, you need to normalize the text data by reducing the words to their base forms.</p>
+<p>This is where stemming and lemmatization come into play. These two key normalization techniques are essential tools in the natural language processing (NLP) toolkit, enabling researchers to preprocess text data and extract meaningful insights.</p>
+<p>Stemming is the process of reducing words to their root or base form by removing affixes (prefixes and suffixes). For instance, the words “running,” “runs,” and “ran” would all be reduced to the stem “run.” By stemming words, we can group together different variations of the same word, making it easier to analyze and compare text data across different sources.</p>
+<p>Lemmatization, on the other hand, takes a more sophisticated approach. It involves reducing words to their dictionary form, known as the lemma. Unlike stemming, lemmatization considers the context and part of speech of a word to determine its lemma. For example, the word “better” would be lemmatized to “good,” while “ran” would be lemmatized to “run.”</p>
+<p>To illustrate the importance of stemming and lemmatization in a sociological context, let’s consider another example. Suppose you are analyzing a large corpus of news articles to study media coverage of immigration issues. By applying stemming or lemmatization to the text data, you can group together related words like “immigrant,” “immigrants,” “immigration,” and “immigrate.” This normalization process allows you to capture the overall sentiment and themes surrounding immigration, regardless of the specific word forms used in the articles.</p>
+<p>Throughout this chapter, we will explore the concepts of stemming and lemmatization in detail, discussing their algorithms, advantages, and limitations. We will also dive into the practical implementation of these techniques using Python, with a focus on the Natural Language Toolkit (NLTK) and SpaCy libraries. By the end of this chapter, you will have a solid understanding of how to apply stemming and lemmatization to your own sociological research, enabling you to uncover valuable insights from text data.</p>
+<p>So, let’s embark on this journey of text normalization and discover how stemming and lemmatization can revolutionize your computational social science analyses!</p>
+</section>
+<section id="what-is-stemming" class="level2">
+<h2 class="anchored" data-anchor-id="what-is-stemming">What is Stemming?</h2>
+<p>Imagine you’re analyzing a large corpus of text data for your sociology research on how language evolves over time in online communities. As you start processing the text, you quickly realize that there are many different variations of the same word being used. For example, you might come across the words “run,” “running,” “runs,” and “ran” in various places. While all these words share a common base meaning, treating them as completely separate entities could lead to less accurate results in your analysis. This is where stemming comes into play.</p>
+<p>Stemming is the process of reducing a word to its base or root form, known as the “stem.” The goal is to remove any suffixes or prefixes from the word, leaving only the core part that carries the essential meaning. By stemming words, we can group together different variations of the same word, making our text analysis more efficient and effective.</p>
+<p>For instance, let’s say you’re examining social media posts about a recent political event. You might find mentions of “protest,” “protesting,” “protested,” and “protests” throughout the text. A stemming algorithm would reduce all these variations to the common stem “protest.” This allows you to treat these words as semantically similar and analyze them collectively, rather than as separate entities.</p>
+<p>Here are a few more examples to illustrate the stemming process:</p>
+<ul>
+<li>“jumping,” “jumped,” “jumps” → “jump”</li>
+<li>“happily,” “happiness” → “happi”</li>
+<li>“organization,” “organizing” → “organ”</li>
+</ul>
+<p>As you can see, stemming strips away the endings of words, leaving behind a base form that may not always be a valid word itself (e.g., “happi” or “organ”). This is one of the limitations of stemming algorithms—they can sometimes produce stems that are not actual words. However, for the purposes of text analysis, these stemmed forms still serve as useful representations of the original words.</p>
+<p>It’s important to note that stemming is a rule-based approach, meaning it follows predefined rules to remove suffixes and prefixes. This can sometimes lead to oversimplification or incorrect stemming. For example, the words “university” and “universe” might both be stemmed to “univers,” even though they have different meanings.</p>
+<p>Despite these limitations, stemming remains a widely used technique in text preprocessing for NLP tasks. By reducing words to their base forms, stemming helps to simplify and normalize text data, making it easier to analyze and extract insights from large volumes of text.</p>
+<p>In the next section, we’ll explore some of the most common types of stemming algorithms and how they work under the hood. Get ready to dive deeper into the world of text normalization!</p>
+<section id="types-of-stemmers" class="level3">
+<h3 class="anchored" data-anchor-id="types-of-stemmers">Types of Stemmers</h3>
+<p>When it comes to stemming, there are several algorithms available, each with its own strengths and weaknesses. Let’s dive into three of the most popular stemmers: Porter, Snowball, and Lancaster.</p>
+<section id="porter-stemmer" class="level4">
+<h4 class="anchored" data-anchor-id="porter-stemmer">Porter Stemmer</h4>
+<p>The Porter Stemmer, developed by Martin Porter in 1980, is one of the oldest and most widely used stemming algorithms. It’s based on a set of rules that are applied in phases to iteratively remove suffixes from words until a base form, or stem, is reached.</p>
+<p>The algorithm consists of five phases, each with its own set of rules for suffix removal. These rules are designed to handle common English word endings, such as “-ed,” “-ing,” “-ation,” and “-izer.” The Porter Stemmer is known for its simplicity and speed, making it a popular choice for many text analysis tasks.</p>
+<p>However, the Porter Stemmer has some limitations. It can sometimes be too aggressive in its stemming, resulting in stems that are not actual words. For example, it might reduce both “university” and “universal” to “univers,” which is not a real word. Additionally, it may not handle irregular word forms or domain-specific terminology as effectively as other stemmers.</p>
+</section>
+<section id="snowball-stemmer" class="level4">
+<h4 class="anchored" data-anchor-id="snowball-stemmer">Snowball Stemmer</h4>
+<p>The Snowball Stemmer, also known as the Porter2 Stemmer, is an improvement upon the original Porter algorithm. It was developed by Martin Porter in 2001 as part of the Snowball project, which aimed to create stemming algorithms for multiple languages.</p>
+<p>Like the Porter Stemmer, Snowball uses a set of rules to remove suffixes iteratively. However, it includes additional rules and improvements to handle more complex word forms and reduce over-stemming. The Snowball Stemmer is available for many languages, making it a versatile choice for multilingual text analysis.</p>
+<p>Compared to the Porter Stemmer, Snowball tends to produce more accurate and meaningful stems. It is less aggressive in its suffix removal and can handle irregular word forms better. However, it may be slightly slower than the Porter Stemmer due to its more complex rules.</p>
+</section>
+<section id="lancaster-stemmer" class="level4">
+<h4 class="anchored" data-anchor-id="lancaster-stemmer">Lancaster Stemmer</h4>
+<p>The Lancaster Stemmer, also known as the Paice/Husk Stemmer, was developed by Chris Paice and Gareth Husk at Lancaster University in the 1990s. It is based on a set of rules that are applied iteratively to strip suffixes from words.</p>
+<p>The Lancaster Stemmer is known for being more aggressive than both the Porter and Snowball stemmers. It has a larger set of rules and can remove more suffixes, resulting in shorter stems. This aggressiveness can be beneficial in some cases, as it can help to group together words with similar meanings more effectively.</p>
+<p>However, the Lancaster Stemmer’s aggressiveness can also be a drawback. It may over-stem words, resulting in stems that are too short or not meaningful. For example, it might reduce “organization” to “org,” which could be ambiguous or not useful for analysis. Additionally, the Lancaster Stemmer may not handle irregular word forms as well as the Snowball Stemmer.</p>
+<p>When choosing a stemmer, it’s essential to consider your specific text analysis needs and the characteristics of your data. The Porter Stemmer is fast and simple, the Snowball Stemmer offers a good balance of speed and accuracy, and the Lancaster Stemmer is more aggressive. In the next section, we’ll explore how to implement these stemmers in Python and compare their results on real text data.</p>
+</section>
+</section>
+<section id="implementing-stemming-in-python" class="level3">
+<h3 class="anchored" data-anchor-id="implementing-stemming-in-python">Implementing Stemming in Python</h3>
+<p>Now that you understand the different types of stemmers, let’s dive into how to actually implement stemming in Python. Don’t worry if you’re new to Python or programming in general—we’ll walk through each step together.</p>
+<p>First things first, you’ll need to install the Natural Language Toolkit (NLTK) library. NLTK is a powerful tool for working with human language data in Python. It provides a suite of text processing libraries, including various stemmers.</p>
+<p>To install NLTK, open your terminal or command prompt and run:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>pip install nltk</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Once NLTK is installed, you’ll need to download the necessary data for the stemmers. In your Python script or interactive shell, run:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> nltk</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>nltk.download(<span class="st">'punkt'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This downloads the punctuation tokenizer, which we’ll use to split our text into individual words.</p>
+<p>Now, let’s see how to apply different stemmers to our text data. We’ll start with the Porter Stemmer, which is the most commonly used stemmer:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> nltk.stem <span class="im">import</span> PorterStemmer</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Create an instance of the Porter Stemmer</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>porter <span class="op">=</span> PorterStemmer()</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Sample text</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>text <span class="op">=</span> <span class="st">"Sociologists study social behaviors, interactions, and structures to understand society and social change."</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Tokenize the text into individual words</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>words <span class="op">=</span> nltk.word_tokenize(text)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply the Porter Stemmer to each word</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>stemmed_words <span class="op">=</span> [porter.stem(word) <span class="cf">for</span> word <span class="kw">in</span> words]</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(stemmed_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Output:</p>
+<pre><code>['sociologist', 'studi', 'social', 'behavior', ',', 'interact', ',', 'and', 'structur', 'to', 'understand', 'societi', 'and', 'social', 'chang', '.']</code></pre>
+<p>As you can see, the Porter Stemmer has reduced words like “sociologists” to “sociologist”, “study” to “studi”, and “behaviors” to “behavior”.</p>
+<p>Let’s try the Snowball Stemmer, which is an improved version of the Porter Stemmer:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> nltk.stem <span class="im">import</span> SnowballStemmer</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Create an instance of the Snowball Stemmer</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>snowball <span class="op">=</span> SnowballStemmer(<span class="st">'english'</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply the Snowball Stemmer to each word</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>stemmed_words <span class="op">=</span> [snowball.stem(word) <span class="cf">for</span> word <span class="kw">in</span> words]</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(stemmed_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Output:</p>
+<pre><code>['sociologist', 'studi', 'social', 'behavior', ',', 'interact', ',', 'and', 'structur', 'to', 'understand', 'societi', 'and', 'social', 'chang', '.']</code></pre>
+<p>In this case, the Snowball Stemmer produces the same results as the Porter Stemmer. However, for some words, it may give different stems.</p>
+<p>Finally, let’s apply the Lancaster Stemmer, which is a more aggressive stemmer:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> nltk.stem <span class="im">import</span> LancasterStemmer</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Create an instance of the Lancaster Stemmer</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>lancaster <span class="op">=</span> LancasterStemmer()</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply the Lancaster Stemmer to each word</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>stemmed_words <span class="op">=</span> [lancaster.stem(word) <span class="cf">for</span> word <span class="kw">in</span> words]</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(stemmed_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Output:</p>
+<pre><code>['sociol', 'study', 'soc', 'behav', ',', 'interact', ',', 'and', 'struct', 'to', 'understand', 'societ', 'and', 'soc', 'chang', '.']</code></pre>
+<p>Notice how the Lancaster Stemmer reduces “sociologists” to “sociol”, “social” to “soc”, and “behaviors” to “behav”. It’s more aggressive in its stemming compared to the Porter and Snowball stemmers.</p>
+<p>Choosing the right stemmer depends on your specific use case and the level of stemming you require. In general, the Porter Stemmer is a good choice for most applications, while the Lancaster Stemmer can be used when you need more aggressive stemming.</p>
+<p>Remember, stemming is just one technique in the text preprocessing pipeline. Combining it with other techniques like lowercasing, removing stopwords, and lemmatization can help you effectively clean and normalize your text data for further analysis.</p>
+</section>
+</section>
+<section id="what-is-lemmatization" class="level2">
+<h2 class="anchored" data-anchor-id="what-is-lemmatization">What is Lemmatization?</h2>
+<p>Imagine you’re analyzing a large corpus of social media posts about a recent political event. As you’re combing through the data, you notice various forms of the same word popping up—“organize”, “organizes”, “organizing”, “organized”. While all related, these different word forms could be complicating your frequency analysis. Wouldn’t it be nice if there was a way to reduce these words to their base form? Well, that’s exactly what lemmatization does!</p>
+<p>Lemmatization is the process of reducing a word to its base or dictionary form, known as the lemma. For example, the lemma of the word “organizing” is “organize”. By lemmatizing words in your text data, you can group together different inflected forms of the same word, which can be incredibly helpful in text analysis tasks like frequency counting, topic modeling, or sentiment analysis.</p>
+<p>You might be thinking, “Wait, isn’t that what stemming does?” While stemming and lemmatization have similar goals of reducing words to their base form, there are some key differences:</p>
+<ol type="1">
+<li><p>Stemming operates on a single word without considering the context, chopping off the ends of words using heuristics. Lemmatization, on the other hand, uses detailed dictionaries and morphological analysis to return the base or dictionary form of the word, known as the lemma.</p></li>
+<li><p>The output of stemming may not always be a real word, whereas lemmatization always returns a real word. For example, stemming the word “organization” might return “organ”, while lemmatizing it would return “organization”.</p></li>
+<li><p>Lemmatization is more computationally expensive than stemming, as it involves more complex processing and requires detailed dictionaries.</p></li>
+</ol>
+<p>To illustrate the power of lemmatization, let’s look at an example from a sociological perspective. Suppose you’re analyzing a corpus of news articles about immigration. Without lemmatization, your frequency analysis might treat “immigrate”, “immigrates”, “immigrated”, and “immigrating” as separate words, diluting the overall frequency of the concept. By lemmatizing these words to “immigrate”, you can get a more accurate picture of how often the concept of immigration is mentioned in your corpus.</p>
+<section id="types-of-lemmatizers" class="level3">
+<h3 class="anchored" data-anchor-id="types-of-lemmatizers">Types of Lemmatizers</h3>
+<p>Now that you understand what lemmatization is and how it differs from stemming, let’s dive into the two most commonly used lemmatizers in Python: the WordNet Lemmatizer and the SpaCy Lemmatizer. Each has its own strengths and weaknesses, so it’s important to understand how they work and when to use them.</p>
+<section id="wordnet-lemmatizer" class="level4">
+<h4 class="anchored" data-anchor-id="wordnet-lemmatizer">WordNet Lemmatizer</h4>
+<p>The WordNet Lemmatizer is part of the Natural Language Toolkit (NLTK) library in Python. It uses the WordNet database, which is a large lexical database of English words, to determine the base form of a word. The algorithm looks up each word in the WordNet database and returns the lemma of the word.</p>
+<p>One advantage of the WordNet Lemmatizer is that it is based on a well-established lexical database, which makes it quite accurate. However, a limitation is that it requires the part-of-speech (POS) tag of a word to determine the correct lemma. This means you need to perform POS tagging on your text before lemmatization, which can be time-consuming.</p>
+<p>Here’s an example of how to use the WordNet Lemmatizer in Python:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> nltk.stem <span class="im">import</span> WordNetLemmatizer</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> nltk.corpus <span class="im">import</span> wordnet</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>lemmatizer <span class="op">=</span> WordNetLemmatizer()</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_wordnet_pos(word):</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Map POS tag to first character lemmatize() accepts"""</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    tag <span class="op">=</span> nltk.pos_tag([word])[<span class="dv">0</span>][<span class="dv">1</span>][<span class="dv">0</span>].upper()</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    tag_dict <span class="op">=</span> {<span class="st">"J"</span>: wordnet.ADJ,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>                <span class="st">"N"</span>: wordnet.NOUN,</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>                <span class="st">"V"</span>: wordnet.VERB,</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>                <span class="st">"R"</span>: wordnet.ADV}</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> tag_dict.get(tag, wordnet.NOUN)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>text <span class="op">=</span> <span class="st">"The findings revealed that social media usage was correlated with feelings of loneliness."</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>words <span class="op">=</span> nltk.word_tokenize(text)</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>lemmatized_words <span class="op">=</span> [lemmatizer.lemmatize(w, get_wordnet_pos(w)) <span class="cf">for</span> w <span class="kw">in</span> words]</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(lemmatized_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Output:</p>
+<pre><code>['The', 'finding', 'reveal', 'that', 'social', 'medium', 'usage', 'be', 'correlate', 'with', 'feeling', 'of', 'loneliness', '.']</code></pre>
+</section>
+<section id="spacy-lemmatizer" class="level4">
+<h4 class="anchored" data-anchor-id="spacy-lemmatizer">SpaCy Lemmatizer</h4>
+<p>SpaCy is another popular library for natural language processing in Python. Its lemmatizer is based on a pre-trained model that predicts the lemma of a word based on its context. This means that, unlike the WordNet Lemmatizer, it doesn’t require separate POS tagging.</p>
+<p>The SpaCy Lemmatizer is generally faster than the WordNet Lemmatizer because it doesn’t need to look up each word in a database. However, its accuracy depends on the quality of the pre-trained model, which can vary for different languages and domains.</p>
+<p>Here’s an example of using the SpaCy Lemmatizer:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> spacy</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>nlp <span class="op">=</span> spacy.load(<span class="st">"en_core_web_sm"</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>text <span class="op">=</span> <span class="st">"The findings revealed that social media usage was correlated with feelings of loneliness."</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>doc <span class="op">=</span> nlp(text)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>lemmatized_words <span class="op">=</span> [token.lemma_ <span class="cf">for</span> token <span class="kw">in</span> doc]</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(lemmatized_words)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Output:</p>
+<pre><code>['the', 'finding', 'reveal', 'that', 'social', 'media', 'usage', 'be', 'correlate', 'with', 'feeling', 'of', 'loneliness', '.']</code></pre>
+<p>As you can see, the results are similar to the WordNet Lemmatizer, but the SpaCy Lemmatizer was able to handle the POS tagging implicitly.</p>
+<p>When deciding between these two lemmatizers, consider the trade-off between accuracy and speed. If you have a large corpus and need to process it quickly, the SpaCy Lemmatizer might be a better choice. If accuracy is your top priority and you have the time for POS tagging, the WordNet Lemmatizer could be preferable.</p>
+<p>In the next section, we’ll compare stemming and lemmatization in more detail and discuss when you might choose one over the other in your sociological text analysis projects.</p>
+</section>
+</section>
+</section>
+<section id="stemming-vs.-lemmatization" class="level2">
+<h2 class="anchored" data-anchor-id="stemming-vs.-lemmatization">Stemming vs.&nbsp;Lemmatization</h2>
+<p>Now that you’re familiar with the different types of lemmatizers, let’s dive into a detailed comparison of stemming and lemmatization. While both techniques aim to reduce words to their base or dictionary form, they differ in their approaches and the results they produce. Understanding these differences will help you choose the most appropriate method for your specific text analysis tasks.</p>
+<section id="the-nitty-gritty-of-stemming-and-lemmatization" class="level3">
+<h3 class="anchored" data-anchor-id="the-nitty-gritty-of-stemming-and-lemmatization">The Nitty-Gritty of Stemming and Lemmatization</h3>
+<p>Stemming is a more aggressive and straightforward approach to word reduction. It works by removing the suffixes from words based on a set of predefined rules. For example, a stemmer would reduce the words “running,” “runs,” and “runner” to the stem “run.” Stemmers don’t consider the context or the part of speech of the words; they simply chop off the endings.</p>
+<p>On the other hand, lemmatization is a more sophisticated technique that takes into account the morphological analysis of words. It reduces words to their base or dictionary form, known as the lemma. Lemmatization considers the context and part of speech of a word to determine its lemma. For instance, the lemma of “better” would be “good,” and the lemma of “running” (as a verb) would be “run.”</p>
+</section>
+<section id="pros-and-cons-stemming-vs.-lemmatization" class="level3">
+<h3 class="anchored" data-anchor-id="pros-and-cons-stemming-vs.-lemmatization">Pros and Cons: Stemming vs.&nbsp;Lemmatization</h3>
+<p>Stemming has its advantages. It’s faster and computationally less expensive compared to lemmatization. Stemmers are also easier to implement and maintain. However, stemming can sometimes result in overstemming (reducing words too aggressively) or understemming (not reducing words sufficiently). This can lead to a loss of meaning or the creation of non-existent words.</p>
+<p>Lemmatization, while more computationally intensive and slower than stemming, produces more accurate results. By considering the context and part of speech, lemmatization can disambiguate words with multiple meanings and preserve the original meaning of the text. However, lemmatization relies on extensive dictionaries and morphological knowledge, which can be challenging to develop and maintain for some languages.</p>
+</section>
+<section id="choosing-the-right-approach" class="level3">
+<h3 class="anchored" data-anchor-id="choosing-the-right-approach">Choosing the Right Approach</h3>
+<p>So, when should you use stemming or lemmatization in your text analysis projects? The choice depends on your specific requirements and the nature of your data.</p>
+<p>Stemming can be a good choice when: - You’re working with a large corpus and need to process the text quickly. - The exact meaning of the words is less important than the general topic or sentiment. - You’re dealing with a language with simple morphology and few irregularities.</p>
+<p>Lemmatization is preferable when: - The precise meaning of the words is crucial for your analysis. - You’re working with a smaller dataset and can afford the additional computational cost. - You’re analyzing a language with rich morphology and many irregular forms.</p>
+<p>In some cases, you might even consider using a combination of stemming and lemmatization, depending on the specific requirements of your text analysis task.</p>
+<p>As a sociology researcher, understanding the nuances of stemming and lemmatization will empower you to make informed decisions when preprocessing your text data. By choosing the appropriate technique, you can strike a balance between efficiency and accuracy, ultimately leading to more meaningful insights from your computational social science analyses.</p>
+</section>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>Congratulations! You’ve made it to the end of this chapter on stemming and lemmatization. Let’s take a moment to recap the key points we’ve covered and consider why these techniques are so crucial in computational text analysis.</p>
+<p>Throughout this chapter, we’ve explored the fundamental concepts of stemming and lemmatization—two powerful methods for reducing words to their base or dictionary form. You’ve learned that while both techniques aim to normalize text data, they approach the task in different ways.</p>
+<p>Stemming, as you now know, is a rule-based approach that chops off word endings to derive the stem. It’s fast, simple, and doesn’t require a dictionary. However, it can sometimes produce non-real word stems. Lemmatization, on the other hand, uses a vocabulary and morphological analysis to return the lemma—the base dictionary form of a word. It’s more accurate but also more complex and computationally expensive.</p>
+<p>So, when should you use stemming or lemmatization in your own text analysis projects? As we discussed earlier, the choice depends on your specific goals and the nature of your data. Stemming is often sufficient for simpler tasks like document classification or clustering, where the meaning of individual words is less important. Lemmatization is preferable when you need to preserve the meaning of words for tasks like sentiment analysis or named entity recognition.</p>
+<p>But why are these techniques so important in the first place? At their core, stemming and lemmatization help to reduce the dimensionality of text data. By collapsing related words into a single base form, they make text data more manageable and analysis more efficient. They’re essential preprocessing steps in the natural language processing pipeline.</p>
+<p>As you continue your journey in computational social science, you’ll encounter even more advanced topics in text normalization. Techniques like part-of-speech tagging, dependency parsing, and named entity recognition build upon the foundations of stemming and lemmatization to extract even richer insights from text data.</p>
+<p>The field of natural language processing is rapidly evolving, with new methods and tools emerging all the time. As a sociologist in the digital age, staying up-to-date with these developments will be key to unlocking the full potential of text data in your research.</p>
+<p>So, keep exploring, keep experimenting, and most importantly, keep asking questions. The skills you’ve learned in this chapter are just the beginning of your adventure in computational text analysis. With Python as your trusty sidekick, there’s no limit to the sociological insights you can uncover. Onward!</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
