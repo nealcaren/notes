@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/images/structrued_images.html",
       "/posts/commoncrawl/wario.html",
       "/posts/book/stemming-and-lemmatizations.html",
       "/posts/bias/LLM-bias-02.html",
