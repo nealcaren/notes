@@ -78,9 +78,9 @@ ul.task-list li input[type="checkbox"] {
     }
 
     const options = {
-      valueNames: ['listing-title','listing-author','listing-date','listing-image','listing-description','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
+      valueNames: ['listing-title','listing-author','listing-date','listing-image','listing-description',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
       
-      searchColumns: ["listing-title","listing-author","listing-date","listing-image","listing-description","listing-categories"],
+      searchColumns: ["listing-title","listing-author","listing-date","listing-image","listing-description"],
     };
 
     window['quarto-listings'] = window['quarto-listings'] || {};
@@ -130,7 +130,6 @@ window.Quarto = {
 
 <link rel="stylesheet" href="styles.css">
 <link rel="alternate" type="application/rss+xml" title="notes" href="index.xml" data-external="1"><meta name="twitter:title" content="notes - Python snippets">
-<meta name="twitter:description" content="">
 <meta name="twitter:card" content="summary">
 </head>
 
@@ -180,13 +179,13 @@ window.Quarto = {
 <!-- content -->
 <header id="title-block-header" class="quarto-title-block default page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
-    <div class="quarto-title column-page-left">
+    <div class="quarto-title column-page">
       <h1 class="title">Python snippets</h1>
                       </div>
   </div>
     
   
-  <div class="quarto-title-meta column-page-left">
+  <div class="quarto-title-meta column-page">
 
       
     
@@ -197,20 +196,20 @@ window.Quarto = {
   </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(18)</span></div><div class="category" data-category="Articles to Events">Articles to Events <span class="quarto-category-count">(3)</span></div><div class="category" data-category="Bias">Bias <span class="quarto-category-count">(2)</span></div><div class="category" data-category="Common Crawl">Common Crawl <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Embeddings">Embeddings <span class="quarto-category-count">(1)</span></div><div class="category" data-category="NLTK">NLTK <span class="quarto-category-count">(1)</span></div><div class="category" data-category="OpenAI">OpenAI <span class="quarto-category-count">(6)</span></div><div class="category" data-category="OpenAi">OpenAi <span class="quarto-category-count">(2)</span></div><div class="category" data-category="Text to Speech">Text to Speech <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Transcription">Transcription <span class="quarto-category-count">(1)</span></div><div class="category" data-category="Web Scraping">Web Scraping <span class="quarto-category-count">(3)</span></div><div class="category" data-category="automation">automation <span class="quarto-category-count">(1)</span></div><div class="category" data-category="book">book <span class="quarto-category-count">(1)</span></div><div class="category" data-category="newspaper3k">newspaper3k <span class="quarto-category-count">(1)</span></div><div class="category" data-category="sentence embeddings">sentence embeddings <span class="quarto-category-count">(2)</span></div><div class="category" data-category="topic models">topic models <span class="quarto-category-count">(1)</span></div></div></div>
+    
 <!-- main -->
-<main class="content quarto-banner-title-block column-page-left" id="quarto-document-content">
+<main class="content quarto-banner-title-block column-page" id="quarto-document-content">
 
 
 
 
 
-<p>things I wish I knew 24 hours ago</p>
+<section id="neal-caren-things-i-wish-i-knew-24-hours-ago" class="level2">
+<h2 class="anchored" data-anchor-id="neal-caren-things-i-wish-i-knew-24-hours-ago">Neal Caren<br> things I wish I knew 24 hours ago</h2>
 
 
 
+</section>
 
 <div class="quarto-listing quarto-listing-container-grid" id="listing-listing">
 <div class="list grid quarto-listing-cols-3">
@@ -224,14 +223,6 @@ window.Quarto = {
 <h5 class="no-anchor card-title listing-title">
 Structured Data from Images
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('OpenAI'); return false;">
-OpenAI
-</div>
-<div class="listing-category" onclick="window.quartoListingCategory('automation'); return false;">
-automation
-</div>
-</div>
 <div class="card-text listing-description">
 Analyzing protest pictures with ChatGPT
 </div>
@@ -257,14 +248,6 @@ May 21, 2024
 <h5 class="no-anchor card-title listing-title">
 60,000 news articles from April 20, 2024
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('Common Crawl'); return false;">
-Common Crawl
-</div>
-<div class="listing-category" onclick="window.quartoListingCategory('Web Scraping'); return false;">
-Web Scraping
-</div>
-</div>
 <div class="card-text listing-description">
 Working with the Common Crawl News dataset
 </div>
@@ -280,7 +263,7 @@ May 12, 2024
 </div>
 </a>
 </div>
-<div class="g-col-1" data-index="2" data-categories="book" data-listing-date-sort="1712808000000" data-listing-file-modified-sort="1712850829699" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4216">
+<div class="g-col-1" data-index="2" data-categories="book" data-listing-date-sort="1712808000000" data-listing-file-modified-sort="1716468514212" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="22" data-listing-word-count-sort="4216">
 <a href="./posts/book/stemming-and-lemmatizations.html" class="quarto-grid-link">
 <div class="quarto-grid-item card h-100 card-left borderless">
 <p class="card-img-top">
@@ -290,13 +273,8 @@ May 12, 2024
 <h5 class="no-anchor card-title listing-title">
 Stemming And Lemmatizations
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('book'); return false;">
-book
-</div>
-</div>
 <div class="card-text listing-description">
-An section written by Claude-Opus
+A book section written by Claude Opus
 </div>
 <div class="card-attribution card-text-small justify">
 <div class="listing-author">
@@ -320,17 +298,6 @@ Apr 11, 2024
 <h5 class="no-anchor card-title listing-title">
 Measuring Bias in LLMs, Variant&nbsp;II
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('Bias'); return false;">
-Bias
-</div>
-<div class="listing-category" onclick="window.quartoListingCategory('OpenAi'); return false;">
-OpenAi
-</div>
-<div class="listing-category" onclick="window.quartoListingCategory('Embeddings'); return false;">
-Embeddings
-</div>
-</div>
 <div class="card-text listing-description">
 Mapping Name Embeddings
 </div>
@@ -356,14 +323,6 @@ Mar 14, 2024
 <h5 class="no-anchor card-title listing-title">
 Measuring Bias in LLMs, Variant&nbsp;I
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('Bias'); return false;">
-Bias
-</div>
-<div class="listing-category" onclick="window.quartoListingCategory('OpenAi'); return false;">
-OpenAi
-</div>
-</div>
 <div class="card-text listing-description">
 Conjoint Experiment Replication
 </div>
@@ -389,14 +348,6 @@ Mar 13, 2024
 <h5 class="no-anchor card-title listing-title">
 From Articles to Events, Part&nbsp;III
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('OpenAI'); return false;">
-OpenAI
-</div>
-<div class="listing-category" onclick="window.quartoListingCategory('Articles to Events'); return false;">
-Articles to Events
-</div>
-</div>
 <div class="card-text listing-description">
 Categorizing texts with an LLM
 </div>
@@ -422,11 +373,6 @@ Mar 11, 2024
 <h5 class="no-anchor card-title listing-title">
 Topic models
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('topic models'); return false;">
-topic models
-</div>
-</div>
 <div class="card-text listing-description">
 Using tomotopy to extract text themes
 </div>
@@ -452,14 +398,6 @@ Mar 5, 2024
 <h5 class="no-anchor card-title listing-title">
 From Articles to Events, Part&nbsp;II
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('newspaper3k'); return false;">
-newspaper3k
-</div>
-<div class="listing-category" onclick="window.quartoListingCategory('Articles to Events'); return false;">
-Articles to Events
-</div>
-</div>
 <div class="card-text listing-description">
 Extracting text from media HTML files
 </div>
@@ -485,14 +423,6 @@ Feb 29, 2024
 <h5 class="no-anchor card-title listing-title">
 From Articles to Events, Part&nbsp;I
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('Articles to Events'); return false;">
-Articles to Events
-</div>
-<div class="listing-category" onclick="window.quartoListingCategory('Web Scraping'); return false;">
-Web Scraping
-</div>
-</div>
 <div class="card-text listing-description">
 Downloading lots of articles.
 </div>
@@ -518,11 +448,6 @@ Feb 28, 2024
 <h5 class="no-anchor card-title listing-title">
 More with sentence embeddings
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('sentence embeddings'); return false;">
-sentence embeddings
-</div>
-</div>
 <div class="card-text listing-description">
 Adding and subtracting concepts from a text.
 </div>
@@ -548,11 +473,6 @@ Feb 25, 2024
 <h5 class="no-anchor card-title listing-title">
 Text similarity with sentence embeddings
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('sentence embeddings'); return false;">
-sentence embeddings
-</div>
-</div>
 <div class="card-text listing-description">
 Measuring the distance between a concept and a text.
 </div>
@@ -578,11 +498,6 @@ Feb 23, 2024
 <h5 class="no-anchor card-title listing-title">
 What percent of sociology journal abstracts start with a question?
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('NLTK'); return false;">
-NLTK
-</div>
-</div>
 <div class="card-text listing-description">
 Using NLTK to pull out the first sentence of an abstract.
 </div>
@@ -608,11 +523,6 @@ Feb 21, 2024
 <h5 class="no-anchor card-title listing-title">
 Creating Synthetic Data with ChatGPT
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('OpenAI'); return false;">
-OpenAI
-</div>
-</div>
 <div class="card-text listing-description">
 Writing 600 fake article abstracts.
 </div>
@@ -638,11 +548,6 @@ Feb 20, 2024
 <h5 class="no-anchor card-title listing-title">
 Web Scraping in Bulk
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('Web Scraping'); return false;">
-Web Scraping
-</div>
-</div>
 <div class="card-text listing-description">
 Dwnloading websites in parallel with pyppeteer
 </div>
@@ -668,11 +573,6 @@ Feb 19, 2024
 <h5 class="no-anchor card-title listing-title">
 Using ChatGPT to Make Social Media Posts
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('OpenAI'); return false;">
-OpenAI
-</div>
-</div>
 <div class="card-text listing-description">
 More using Pydantic for OpenAI function calling
 </div>
@@ -698,11 +598,6 @@ Feb 17, 2024
 <h5 class="no-anchor card-title listing-title">
 Getting Structured Data from ChatGPT
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('OpenAI'); return false;">
-OpenAI
-</div>
-</div>
 <div class="card-text listing-description">
 Using Pydantic for OpenAI function calling
 </div>
@@ -728,11 +623,6 @@ Feb 16, 2024
 <h5 class="no-anchor card-title listing-title">
 Audio Transcription with Speaker Identification
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('Transcription'); return false;">
-Transcription
-</div>
-</div>
 <div class="card-text listing-description">
 Transcribing an audio file with WhisperPlus.
 </div>
@@ -758,14 +648,6 @@ Feb 14, 2024
 <h5 class="no-anchor card-title listing-title">
 Text to Speech using OpenAI’s API
 </h5>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('Text to Speech'); return false;">
-Text to Speech
-</div>
-<div class="listing-category" onclick="window.quartoListingCategory('OpenAI'); return false;">
-OpenAI
-</div>
-</div>
 <div class="card-text listing-description">
 We are almost there with computer talking.
 </div>

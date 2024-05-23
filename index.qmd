@@ -4,7 +4,7 @@ listing:
   contents: posts
   sort: "date desc"
   type: grid
-  categories: true
+  categories: false
   sort-ui: false
   grid-item-border: false
   grid-columns: 3
@@ -12,6 +12,9 @@ listing:
   filter-ui: false
 page-layout: full
 title-block-banner: true
+comments: false
+toc: false
+sidebar: false
 ---
 
-things I wish I knew 24 hours ago
+## Neal Caren<br> things I wish I knew 24 hours ago
