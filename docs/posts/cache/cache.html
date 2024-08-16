@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.45">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Neal Caren, Associate Professor, Department of Sociology, University of North Carolina, Chapel Hill">
+<meta name="dcterms.date" content="2024-08-15">
+<meta name="description" content="Playing around with Prompt Caching">
+
+<title>Caching Up with Claude – notes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+<meta name="twitter:title" content="notes - Caching Up with Claude">
+<meta name="twitter:description" content="Playing around with Prompt Caching">
+<meta name="twitter:image" content="https://nealcaren.github.io/notes/posts/cache/library.webp">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/nealcaren"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://bsky.app/profile/haphazardsoc.bsky.social"> <i class="bi bi-twitter" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../../index.xml"> <i class="bi bi-rss" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Caching Up with Claude</h1>
+                  <div>
+        <div class="description">
+          Playing around with Prompt Caching
+        </div>
+      </div>
+                          <div class="quarto-categories">
+                <div class="quarto-category">Claude</div>
+                <div class="quarto-category">Prompts</div>
+              </div>
+                  </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">August 15, 2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+<p>Anthropic recently announced a new feature called “prompt caching” for the Claude API. This feature allows users to store complex instructions or multiple examples in the API’s memory, making them readily available for repeated use. While caching prompts initially costs 25% more than standard API usage, subsequent uses of cached prompts are 90% cheaper, offering significant cost savings for repetitive tasks.</p>
+<p>This new feature holds particular promise for social scientists, like myself, who frequently process large volumes of documents using consistent sets of instructions.</p>
+<p>To test it out, I thought I would try prompt caching on my current project of extracting quotes from newspaper articles about protest events.</p>
+<div id="cell-2" class="cell" data-execution_count="54">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pip install <span class="op">--</span>upgrade anthropic</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Requirement already satisfied: anthropic in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (0.34.0)
+Requirement already satisfied: anyio&lt;5,&gt;=3.5.0 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from anthropic) (4.4.0)
+Requirement already satisfied: distro&lt;2,&gt;=1.7.0 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from anthropic) (1.9.0)
+Requirement already satisfied: httpx&lt;1,&gt;=0.23.0 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from anthropic) (0.27.0)
+Requirement already satisfied: jiter&lt;1,&gt;=0.4.0 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from anthropic) (0.5.0)
+Requirement already satisfied: pydantic&lt;3,&gt;=1.9.0 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from anthropic) (2.8.2)
+Requirement already satisfied: sniffio in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from anthropic) (1.3.1)
+Requirement already satisfied: tokenizers&gt;=0.13.0 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from anthropic) (0.19.1)
+Requirement already satisfied: typing-extensions&lt;5,&gt;=4.7 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from anthropic) (4.12.2)
+Requirement already satisfied: idna&gt;=2.8 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from anyio&lt;5,&gt;=3.5.0-&gt;anthropic) (3.7)
+Requirement already satisfied: exceptiongroup&gt;=1.0.2 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from anyio&lt;5,&gt;=3.5.0-&gt;anthropic) (1.2.0)
+Requirement already satisfied: certifi in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from httpx&lt;1,&gt;=0.23.0-&gt;anthropic) (2024.7.4)
+Requirement already satisfied: httpcore==1.* in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from httpx&lt;1,&gt;=0.23.0-&gt;anthropic) (1.0.5)
+Requirement already satisfied: h11&lt;0.15,&gt;=0.13 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from httpcore==1.*-&gt;httpx&lt;1,&gt;=0.23.0-&gt;anthropic) (0.14.0)
+Requirement already satisfied: annotated-types&gt;=0.4.0 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from pydantic&lt;3,&gt;=1.9.0-&gt;anthropic) (0.7.0)
+Requirement already satisfied: pydantic-core==2.20.1 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from pydantic&lt;3,&gt;=1.9.0-&gt;anthropic) (2.20.1)
+Requirement already satisfied: huggingface-hub&lt;1.0,&gt;=0.16.4 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from tokenizers&gt;=0.13.0-&gt;anthropic) (0.23.4)
+Requirement already satisfied: filelock in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from huggingface-hub&lt;1.0,&gt;=0.16.4-&gt;tokenizers&gt;=0.13.0-&gt;anthropic) (3.15.4)
+Requirement already satisfied: fsspec&gt;=2023.5.0 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from huggingface-hub&lt;1.0,&gt;=0.16.4-&gt;tokenizers&gt;=0.13.0-&gt;anthropic) (2024.6.1)
+Requirement already satisfied: packaging&gt;=20.9 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from huggingface-hub&lt;1.0,&gt;=0.16.4-&gt;tokenizers&gt;=0.13.0-&gt;anthropic) (24.1)
+Requirement already satisfied: pyyaml&gt;=5.1 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from huggingface-hub&lt;1.0,&gt;=0.16.4-&gt;tokenizers&gt;=0.13.0-&gt;anthropic) (6.0.1)
+Requirement already satisfied: requests in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from huggingface-hub&lt;1.0,&gt;=0.16.4-&gt;tokenizers&gt;=0.13.0-&gt;anthropic) (2.32.3)
+Requirement already satisfied: tqdm&gt;=4.42.1 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from huggingface-hub&lt;1.0,&gt;=0.16.4-&gt;tokenizers&gt;=0.13.0-&gt;anthropic) (4.66.4)
+Requirement already satisfied: charset-normalizer&lt;4,&gt;=2 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from requests-&gt;huggingface-hub&lt;1.0,&gt;=0.16.4-&gt;tokenizers&gt;=0.13.0-&gt;anthropic) (3.3.2)
+Requirement already satisfied: urllib3&lt;3,&gt;=1.21.1 in /Users/nealcaren/anaconda3/envs/code/lib/python3.10/site-packages (from requests-&gt;huggingface-hub&lt;1.0,&gt;=0.16.4-&gt;tokenizers&gt;=0.13.0-&gt;anthropic) (2.2.2)
+Note: you may need to restart the kernel to use updated packages.</code></pre>
+</div>
+</div>
+<p>Here are my directions. They are 1,326 tokens long.</p>
+<div id="cell-4" class="cell" data-execution_count="66">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>instructions <span class="op">=</span> <span class="st">'''</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="st"># Analysis of Direct Quotes, Slogans, and Statements</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="st">You are an AI assitant tasked with constructing a Markdown table using information from a newspaper article.</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="st">When analyzing media coverage of protests, it's essential to systematically capture and categorize the key quotes, slogans, chants, and statements made by various participants and stakeholders. This process allows for a clearer understanding of the perspectives, motivations, and messages conveyed during the protest. Whether you’re studying climate demonstrations, social justice movements, or any other form of protest, organizing this information into a structured table can greatly enhance your analysis and presentation of the event.</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="st">The following instructions provide a step-by-step guide to building a comprehensive table that categorizes and classifies quotes, slogans, chants, and statements from protest-related articles. This table will help you differentiate between the voices of protesters, bystanders, targets, and law enforcement, and will allow you to clearly present the various messages and actions that define the protest.</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="st">1. **Identify the Content:** </span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="st">   - Start by carefully reading the article and identifying all the direct quotes, slogans, chants, and statements. Highlight or note each instance where someone is directly quoted or where slogans/chants are mentioned.</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="st">2. **Extract the Content:**</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="st">   - For each identified content, extract the exact wording used in the article. Ensure you capture the quote, slogan, chant, or statement accurately. Use only direct quotes, ignore paraphrasing or other indirect quotes.</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="st">3. **Determine the Source:**</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="st">   - Identify who said or wrote each quote, slogan, chant, or statement. This could be an individual (e.g., a government official), a group (e.g., a protest organization), or an entity (e.g., a company).</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="st">4. **Classify the Role:**</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="st">   - Determine the role of the person or group who made the statement. Roles might include:</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="st">     - **Protester:** The individual or group actively involved in the protest.</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="st">     - **Bystander:** An observer who is neither directly involved in the protest nor its target.</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="st">     - **Target:** A person or entity that the protest or action is aimed at.</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="st">     - **Elected Official:** A person who holds elected or appointed office..</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="st">     - **Law Enforcement:** Police, government officials, or other authorities responding to the protest.</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="st">5. **Classify the Type of Content:**</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="st">   - Determine whether the content is a:</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="st">     - **Quote:** A direct statement made by an individual or group.</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="st">     - **Statement:** A formal declaration or assertion made by a group or individual, often in a press release or public statement.</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="st">     - **Slogan:** A short and memorable phrase used by the protestors, often seen on banners or signs.</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="st">     - **Chant:** A rhythmic phrase repeated by a crowd, usually during a protest.</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="st">6. **Create the Table:**</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="st">   - Set up a table with the following columns:</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a><span class="st">     1. **Quote/Statement:** The exact wording of the quote, slogan, chant, or statement.</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="st">     2. **Who Said It:** The individual, group, or entity that made the statement or created the slogan/chant.</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="st">     3. **Description:** A brief description of who the person or group is, including their role or title.</span></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="st">     4. **Role:** Classify the person or group as a protester, bystander, target, or law enforcement.</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a><span class="st">     5. **Type:** Classify the content as a quote, statement, slogan, or chant.</span></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="st">7. **Populate the Table:**</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a><span class="st">   - Fill in the table with the information you’ve gathered. Ensure that each row corresponds to a specific quote, slogan, chant, or statement, and that all columns are accurately completed.</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a><span class="st">8. **Review for Accuracy:**</span></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a><span class="st">   - Double-check the table for any errors or omissions. Ensure that the content matches the source material and that the roles and types are correctly assigned.</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a><span class="st">9. **Present the Table:**</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a><span class="st">   - Once the table is complete, it can be presented or used for analysis, ensuring that it provides a clear and organized overview of the key content from the article.</span></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a><span class="st">### Example:</span></span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a><span class="st">| **Quote/Statement**                                                                                           | **Who Said It**                | **Description**                                         | **Role**            | **Type**           |</span></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a><span class="st">|---------------------------------------------------------------------------------------------------------------|--------------------------------|---------------------------------------------------------|---------------------|--------------------|</span></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a><span class="st">| "These criminal actions are dangerous and stupid. These anarchists are risking not only their own lives, but are also endangering others. We have recommended tough prison sentences. And we obligate airports to secure their facilities significantly better." | Nancy Faeser                   | Interior Minister of Germany                            | Law Enforcement     | Quote              |</span></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a><span class="st">| "Oil kills"                                                                                                   | Letzte Generation (Last Generation) | Slogan on banners unfurled by activists                  | Protester           | Slogan             |</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a><span class="st">| "Sign the treaty"                                                                                             | Letzte Generation (Last Generation) | Slogan on banners unfurled by activists                  | Protester           | Slogan             |</span></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a><span class="st">| "What’s dangerous is your political failure which is dragging us ever deeper into a catastrophe … we’re talking about our existence. About the lives of billions of people." | Letzte Generation (Last Generation) | Statement from the group defending their protest         | Protester           | Statement          |</span></span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a><span class="st">| "Today’s disruptions at several airports are a concerted act of criminal extortion. This is not a peaceful protest and it is not about supposedly higher goals. These are malicious interventions in air traffic and in the personal rights of every traveller who is unable to take their flight as planned." | Ralph Beisel                   | Managing Director of the Airport Association ADV         | Target              | Statement          |</span></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a><span class="st">This set of directions should help in systematically creating a similar table for any article or document.</span></span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>My two sample articles, covering different protests.</p>
+<div id="cell-6" class="cell" data-execution_count="67">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>article <span class="op">=</span> <span class="st">'''Thousands march in India to protest doctor's rape, murder</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="st">VOA News</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="st">Protesters condemn the rape and murder of a doctor inside a government hospital in Kolkata, India, Aug. 14, 2024. </span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="st">Thousands of women took to the streets in several cities across India Wednesday night, holding candles and signs that said "reclaim the night" to protest the rape and murder of a 31-year-old doctor in Kolkata last week.</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="st">Prime Minister Narendra Modi called for strict punishment of crimes against woman, speaking against "the atrocities committed against our mothers, daughters and sisters."</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="st">"There is outrage against this in the country," he said. "I can feel this outrage."</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="st">India's top police agency on Wednesday took over the investigation of the case, which prompted a strike by doctors calling for safer working conditions.</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="st">The woman's body was discovered Friday in a state-run hospital in Kolkata, West Bengal, where she was a resident doctor. An autopsy confirmed she was sexually assaulted and killed.</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="st">Authorities arrested a police volunteer in connection with the crime.</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="st">On Monday, thousands of doctors marched in Kolkata and across West Bengal to protest the killing. They demanded justice for the victim and improved security at hospitals.</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="st">The protest spread nationwide on Tuesday, disrupting hospital services in several Indian cities. More than 8,000 government doctors halted work in all hospital departments except emergency services.</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="st">In New Delhi, junior doctors protested outside a major government hospital, holding signs that read, "Doctors are not punching bags," according to Reuters.</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="st">Doctors in government hospitals across several states have suspended elective services indefinitely, calling for swift justice and better workplace safety.</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="st">Sexual violence against women is a serious issue in India. In 2022, there were nearly 90 reported rapes daily in the country of 1.4 billion people.</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="st">This case has drawn comparisons to the 2012 gang rape and murder of a young woman on a Delhi bus, which led to significant public outcry and reforms.</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="st">In response to the 2012 incident, the government introduced harsher penalties for rape, including the death penalty for repeat offenders, and established new sexual offenses such as stalking.</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="st">Officials who failed to register rape complaints also faced jail sentences.</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="st">Some information for this report was provided by Agence France-Presse and Reuters.</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="st">The Voice of America provides news and information in more than 40 languages to an estimated weekly audience of over 326 million people. Stories with the VOA News byline are the work of multiple VOA journalists and may contain information from wire service reports.'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-7" class="cell" data-execution_count="68">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>article2 <span class="op">=</span> <span class="st">'''Anti-racism campaigners march again in Belfast</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="st">6 days ago</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="st">Lyndsey Telford and Eimear Flanagan</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="st">BBC News NI</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="st">BBC Crowds of campaigners lining the street in front of Belfast City Hall BBC</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="st">Crowds of campaigners lined the street in front of Belfast City Hall</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="st">Several thousand anti-racism protesters gathered in Belfast city centre on Saturday for another demonstration following a week of disorder and racist attacks.</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="st">The rally was organised by a collective of organisations, including the trade union movement, United Against Racism and End Deportations Belfast.</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="st">United Against Racism said the event was intended to be a "peaceful response to racist violence of recent days".</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="st">"These are our streets, and we will not concede them to the racist forces who want to divide us," said the campaign group's chair, Fiona Doran.</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="st">Marchers gathered in Writers' Square in Belfast with a "refugees welcome" flag</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="st">The demonstration began in Writers' Square at noon on Saturday</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="st">Those attending Saturday's rally gathered in Writers' Square at noon before marching to the front of Belfast City Hall.</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="st">Placards with 'Ulster says no to racism' and 'Ulster says yeo to diversity' were among those waved by campaigners.</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="st">“Today was an amazing celebration of all that is good about our diverse city,” Ms Doran said.</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="st">“Now more than ever, we are determined to make Belfast an anti-racist city that prides itself on diversity.</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="st">"We will continue to fight to overcome the racist policies of the government, which punishes migrants, asylum seekers and refugees for coming here, and demonises people from religious and ethnic minority backgrounds."</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="st">Organisers said about 15,000 people took part in the rally.</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="st">Attack on mosque</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="st">Shortly after the rally began, the Police Service of Northern Ireland (PSNI) gave an update on their response to the upsurge in racially-motivated hate crimes.</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="st">They confirmed they are investigating an attempted petrol bombing of a mosque in Newtownards, County Down.</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="st">The device failed to ignite when it was thrown at the mosque on Friday, but racist graffiti was daubed on the building.</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="st">To date, 32 people have been arrested for offences linked to the recent disorder and racist attacks.</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="st">'Reclaiming our streets'</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="st">Mairead Sullivan and her daughter Nora attending the rally</span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="st">Mairead Sullivan and her daughter Nora joined the anti-racism protest</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="st">One protester taking part in Saturday's march said the event was about "reclaiming our streets".</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a><span class="st">As they marched down Royal Avenue, the crowds chanted "Whose streets? Our streets" and "Belfast is anti-racist".</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="st">Mairead Sullivan and her daughter Nora also attended the parade and said they would protest every week if they needed to.</span></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="st">"I always taught my kids to respect everybody and treat them how you'd want to be treated, and we have to put our words into actions," she told BBC News NI.</span></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a><span class="st">Mairead was born in Belfast but her family moved to the United States to escape the Troubles.</span></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="st">She returned 12 years ago with her own family and said she does not want to see a return to “the dark days”.</span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="st">Nora said the large turnout made her "proud" of Belfast.</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a><span class="st">"I think its so important that we stand up and support each other and we're here for the other members of our community," she added.</span></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="st">"We're all people. We're all just trying to have the best life we can and its important that we're here and make our voices are heard."</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a><span class="st">Campaigners at Writer's Square holding banners and flags</span></span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a><span class="st">United Against Racism helped to organise Saturday's march and rally</span></span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a><span class="st">A number of politicians were also present at Saturday's rally.</span></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a><span class="st">Claire Hanna, South Belfast and Mid Down MP, said she hoped the large turnout will be "uplifting and comforting" for those who feel fearful in the community.</span></span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a><span class="st">"This was people from every community, every part of this city, saying very clearly that they do not want people to be attacked and scapegoated," she said.</span></span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a><span class="st">"If people are claiming to defend their communities, they need to hear that message loud and clear."</span></span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a><span class="st">Sinn Féin assembly member Deirdre Hargey called for those responsible for the violence minorities have faced to stop and be held accountable.</span></span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a><span class="st">"This is the city of emancipation, of civil rights, and we need to work with communities to ensure that we do build an inclusive society which doesn’t hate on other communities, particularly our minority communities."</span></span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a><span class="st">PA Media A woman with dark hair and clothing clapsPA Media</span></span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a><span class="st">Sinn Féin MLA Dierdre Hargey was among politicians at the United Against Racism rally</span></span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a><span class="st">People Before Profit MLA Gerry Carroll said the rally was a "powerful demonstration" of diversity within the city and society.</span></span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a><span class="st">"I hope that it sends a message of support to those people who have been the target of the last week and the last period of time," he said.</span></span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a><span class="st">Second large protest within days</span></span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a><span class="st">Saturday's rally was the second large gathering of anti-racism campaigners within two days in the centre of Belfast.</span></span>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a><span class="st">On Friday more than 1,000 people gathered outside Belfast City Hall to oppose an anti-immigration protest at the same location.</span></span>
+<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a><span class="st">The anti-racism activists outnumbered the anti-immigration protesters by about five to one.</span></span>
+<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a><span class="st">The PSNI ensured the opposing sides were kept apart and both groups dispersed peacefully after Friday's demonstrations.</span></span>
+<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>A function to analyze an article. The <code>cache_control</code> block ensures that the system instructions are stored. As far as I can tell, caches don’t have an ID number, but instead are identified by their content. After five minutes of non-use, they disappear.</p>
+<div id="cell-9" class="cell" data-execution_count="70">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> anthropic</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Markdown</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>client <span class="op">=</span> anthropic.Anthropic()</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> analyze_article(article):</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    response <span class="op">=</span> client.beta.prompt_caching.messages.create(</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        model<span class="op">=</span><span class="st">"claude-3-5-sonnet-20240620"</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        max_tokens<span class="op">=</span><span class="dv">2044</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        system<span class="op">=</span>[</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>            {</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>                <span class="st">"type"</span>: <span class="st">"text"</span>,</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>                <span class="st">"text"</span>: instructions,</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>                <span class="st">"cache_control"</span>: {<span class="st">"type"</span>: <span class="st">"ephemeral"</span>},</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>            },</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>        ],</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        messages<span class="op">=</span>[</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>            {</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>                <span class="st">"role"</span>: <span class="st">"user"</span>,</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>                <span class="st">"content"</span>: article,</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>        ],</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> response</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Analyze the two articles. For now, I’m ignoring accuracy, although I think it’s pretty good.</p>
+<div id="cell-11" class="cell" data-execution_count="71">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> analyze_article(article)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>Markdown(a.content[<span class="dv">0</span>].text)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>PromptCachingBetaUsage(cache_creation_input_tokens=1326, cache_read_input_tokens=0, input_tokens=579, output_tokens=211)</code></pre>
+</div>
+<div class="cell-output cell-output-display cell-output-markdown" data-execution_count="71">
+<p>Here’s a Markdown table based on the article, focusing on direct quotes, slogans, and statements:</p>
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 30%">
+<col style="width: 23%">
+<col style="width: 23%">
+<col style="width: 10%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Quote/Statement</th>
+<th>Who Said It</th>
+<th>Description</th>
+<th>Role</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>“reclaim the night”</td>
+<td>Protesters</td>
+<td>Slogan on signs held by protesters</td>
+<td>Protester</td>
+<td>Slogan</td>
+</tr>
+<tr class="even">
+<td>“There is outrage against this in the country. I can feel this outrage.”</td>
+<td>Narendra Modi</td>
+<td>Prime Minister of India</td>
+<td>Elected Official</td>
+<td>Quote</td>
+</tr>
+<tr class="odd">
+<td>“Doctors are not punching bags”</td>
+<td>Junior doctors</td>
+<td>Slogan on signs held by protesting doctors in New Delhi</td>
+<td>Protester</td>
+<td>Slogan</td>
+</tr>
+</tbody>
+</table>
+<p>Note: The article doesn’t contain many direct quotes or slogans. Most of the information is presented as paraphrased statements or general descriptions of events. The table includes the few instances of direct quotes and slogans that were explicitly mentioned in the article.</p>
+</div>
+</div>
+<div id="cell-12" class="cell" data-execution_count="72">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> analyze_article(article2)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>Markdown(b.content[<span class="dv">0</span>].text)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>PromptCachingBetaUsage(cache_creation_input_tokens=0, cache_read_input_tokens=1326, input_tokens=1217, output_tokens=752)</code></pre>
+</div>
+<div class="cell-output cell-output-display cell-output-markdown" data-execution_count="72">
+<p>Here’s a Markdown table summarizing the direct quotes, slogans, and statements from the article:</p>
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 30%">
+<col style="width: 23%">
+<col style="width: 23%">
+<col style="width: 10%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Quote/Statement</th>
+<th>Who Said It</th>
+<th>Description</th>
+<th>Role</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>“These are our streets, and we will not concede them to the racist forces who want to divide us.”</td>
+<td>Fiona Doran</td>
+<td>Chair of United Against Racism</td>
+<td>Protester</td>
+<td>Quote</td>
+</tr>
+<tr class="even">
+<td>“Today was an amazing celebration of all that is good about our diverse city.”</td>
+<td>Fiona Doran</td>
+<td>Chair of United Against Racism</td>
+<td>Protester</td>
+<td>Quote</td>
+</tr>
+<tr class="odd">
+<td>“Now more than ever, we are determined to make Belfast an anti-racist city that prides itself on diversity.”</td>
+<td>Fiona Doran</td>
+<td>Chair of United Against Racism</td>
+<td>Protester</td>
+<td>Quote</td>
+</tr>
+<tr class="even">
+<td>“We will continue to fight to overcome the racist policies of the government, which punishes migrants, asylum seekers and refugees for coming here, and demonises people from religious and ethnic minority backgrounds.”</td>
+<td>Fiona Doran</td>
+<td>Chair of United Against Racism</td>
+<td>Protester</td>
+<td>Quote</td>
+</tr>
+<tr class="odd">
+<td>“Whose streets? Our streets”</td>
+<td>Protesters</td>
+<td>Chant during the march</td>
+<td>Protester</td>
+<td>Chant</td>
+</tr>
+<tr class="even">
+<td>“Belfast is anti-racist”</td>
+<td>Protesters</td>
+<td>Chant during the march</td>
+<td>Protester</td>
+<td>Chant</td>
+</tr>
+<tr class="odd">
+<td>“I always taught my kids to respect everybody and treat them how you’d want to be treated, and we have to put our words into actions.”</td>
+<td>Mairead Sullivan</td>
+<td>Protester at the rally</td>
+<td>Protester</td>
+<td>Quote</td>
+</tr>
+<tr class="even">
+<td>“I think its so important that we stand up and support each other and we’re here for the other members of our community.”</td>
+<td>Nora Sullivan</td>
+<td>Protester at the rally</td>
+<td>Protester</td>
+<td>Quote</td>
+</tr>
+<tr class="odd">
+<td>“We’re all people. We’re all just trying to have the best life we can and its important that we’re here and make our voices are heard.”</td>
+<td>Nora Sullivan</td>
+<td>Protester at the rally</td>
+<td>Protester</td>
+<td>Quote</td>
+</tr>
+<tr class="even">
+<td>“This was people from every community, every part of this city, saying very clearly that they do not want people to be attacked and scapegoated.”</td>
+<td>Claire Hanna</td>
+<td>South Belfast and Mid Down MP</td>
+<td>Elected Official</td>
+<td>Quote</td>
+</tr>
+<tr class="odd">
+<td>“If people are claiming to defend their communities, they need to hear that message loud and clear.”</td>
+<td>Claire Hanna</td>
+<td>South Belfast and Mid Down MP</td>
+<td>Elected Official</td>
+<td>Quote</td>
+</tr>
+<tr class="even">
+<td>“This is the city of emancipation, of civil rights, and we need to work with communities to ensure that we do build an inclusive society which doesn’t hate on other communities, particularly our minority communities.”</td>
+<td>Deirdre Hargey</td>
+<td>Sinn Féin assembly member</td>
+<td>Elected Official</td>
+<td>Quote</td>
+</tr>
+<tr class="odd">
+<td>“I hope that it sends a message of support to those people who have been the target of the last week and the last period of time.”</td>
+<td>Gerry Carroll</td>
+<td>People Before Profit MLA</td>
+<td>Elected Official</td>
+<td>Quote</td>
+</tr>
+<tr class="even">
+<td>“Ulster says no to racism”</td>
+<td>Protesters</td>
+<td>Slogan on placards</td>
+<td>Protester</td>
+<td>Slogan</td>
+</tr>
+<tr class="odd">
+<td>“Ulster says yeo to diversity”</td>
+<td>Protesters</td>
+<td>Slogan on placards</td>
+<td>Protester</td>
+<td>Slogan</td>
+</tr>
+<tr class="even">
+<td>“Refugees welcome”</td>
+<td>Protesters</td>
+<td>Flag at the rally</td>
+<td>Protester</td>
+<td>Slogan</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Works great. I had Claude figure out how much this saves me, figuring the average article length would be 1,000 tokens and the average returned table would be 500 tokens.</p>
+<div id="cell-14" class="cell" data-execution_count="73">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Constants</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>BASE_INPUT_PRICE <span class="op">=</span> <span class="dv">3</span> <span class="op">/</span> <span class="dv">1000000</span>  <span class="co"># $3 per million tokens</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>CACHE_WRITE_PRICE <span class="op">=</span> <span class="fl">3.75</span> <span class="op">/</span> <span class="dv">1000000</span>  <span class="co"># $3.75 per million tokens</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>CACHE_HIT_PRICE <span class="op">=</span> <span class="fl">0.30</span> <span class="op">/</span> <span class="dv">1000000</span>  <span class="co"># $0.30 per million tokens</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>OUTPUT_PRICE <span class="op">=</span> <span class="dv">15</span> <span class="op">/</span> <span class="dv">1000000</span>  <span class="co"># $15 per million tokens</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>CACHE_SIZE <span class="op">=</span> <span class="dv">1326</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>REGULAR_INPUT_SIZE <span class="op">=</span> <span class="dv">1000</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>REGULAR_OUTPUT_SIZE <span class="op">=</span> <span class="dv">500</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> calculate_costs_and_savings(num_calls):</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Calculate cost without cache</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    regular_cost <span class="op">=</span> (BASE_INPUT_PRICE <span class="op">*</span> (CACHE_SIZE <span class="op">+</span> REGULAR_INPUT_SIZE) <span class="op">*</span> num_calls) <span class="op">+</span> (OUTPUT_PRICE <span class="op">*</span> (CACHE_SIZE <span class="op">+</span> REGULAR_OUTPUT_SIZE) <span class="op">*</span> num_calls)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Calculate cost with cache</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    cache_cost <span class="op">=</span> (CACHE_WRITE_PRICE <span class="op">*</span> CACHE_SIZE)  <span class="co"># First call writes to cache</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    cache_cost <span class="op">+=</span> (CACHE_HIT_PRICE <span class="op">*</span> CACHE_SIZE <span class="op">*</span> (num_calls <span class="op">-</span> <span class="dv">1</span>))  <span class="co"># Subsequent calls use cache</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    cache_cost <span class="op">+=</span> (BASE_INPUT_PRICE <span class="op">*</span> REGULAR_INPUT_SIZE <span class="op">*</span> num_calls)  <span class="co"># Regular input for all calls</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    cache_cost <span class="op">+=</span> (OUTPUT_PRICE <span class="op">*</span> (CACHE_SIZE <span class="op">+</span> REGULAR_OUTPUT_SIZE) <span class="op">*</span> num_calls)  <span class="co"># Output cost</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Calculate savings</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    savings <span class="op">=</span> regular_cost <span class="op">-</span> cache_cost</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> regular_cost, cache_cost, savings</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate costs and savings for different number of calls</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>call_counts <span class="op">=</span> [<span class="dv">10</span>, <span class="dv">100</span>, <span class="dv">1000</span>]</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> calls <span class="kw">in</span> call_counts:</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>    regular_cost, cache_cost, savings <span class="op">=</span> calculate_costs_and_savings(calls)</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"For </span><span class="sc">{</span>calls<span class="sc">}</span><span class="ss"> calls:"</span>)</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  Total cost without cache: $</span><span class="sc">{</span>regular_cost<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  Total cost with cache: $</span><span class="sc">{</span>cache_cost<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  Total savings: $</span><span class="sc">{</span>savings<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>For 10 calls:
+  Total cost without cache: $0.34
+  Total cost with cache: $0.31
+  Total savings: $0.03
+
+For 100 calls:
+  Total cost without cache: $3.44
+  Total cost with cache: $3.08
+  Total savings: $0.35
+
+For 1000 calls:
+  Total cost without cache: $34.37
+  Total cost with cache: $30.79
+  Total savings: $3.58
+</code></pre>
+</div>
+</div>
+<p>Since the output is the expsenive part, you don’t save much here, but it does reduce the total cost by about 10% by only adding one line of code.</p>
+
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/nealcaren\.github\.io\/notes");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
